@@ -85,6 +85,16 @@ public class ResourceHelper {
         return  new AESCrypter(key, iv).encrypt(tohash);
     }
     
+    public String doVerifyPIN(String key, String iv, ProfileSyncOBJ obj) throws SecException {
+        String tohash = obj.getCode()+obj.getPin();
+        return  new AESCrypter(key, iv).encrypt(tohash);
+    }
+    
+    public String doForcePIN(String key, String iv, ProfileSyncOBJ obj) throws SecException {
+        String tohash = obj.getCode()+obj.getVerifyPin();
+        return  new AESCrypter(key, iv).encrypt(tohash);
+    }
+    
     /*
     public String doPassword(String key, String iv, String plainPass) throws SecException {
      
@@ -124,6 +134,69 @@ public class ResourceHelper {
 
         return resp.toUpperCase();
      }
+    
+     
+     public static String doCategoryDescription(int catId) {
+       String desc = "";
+       
+         try 
+         {
+             switch(catId)
+             {
+                 case 1:
+                 desc = "CATEGORY 1";
+                 break;
+                 case 2:
+                 desc = "CATEGORY 2";
+                 break;
+                 case 3:
+                 desc = "CATEGORY 3";
+                 break;
+                 case 4:
+                 desc = "CATEGORY 4";
+                 break;
+                 default:
+                 desc = "CATEGORY "+catId;
+                 break;      
+            }
+                     
+         } 
+         catch (Exception e) {
+         }
+       return desc;
+    }
+     
+     public String doStatusDesc(int tid) {
+        String desc = "";
+        try 
+        {
+             switch(tid)
+             {
+                 case 0:
+                 desc = "IN-ACTIVE";
+                 break;
+                 case 1:
+                 desc = "ACTIVE";
+                 break;
+                 case 3:
+                 desc = "PENDING RESET";
+                 break;
+                 case 10:
+                 desc = "DELETED";
+                 break;
+                 default:
+                  desc = "UNKNOWN -> "+tid;
+                 break;
+                 
+             }
+            
+            
+        } 
+        catch (Exception e) {
+       
+        }
+     return desc;
+    }
     
     
     

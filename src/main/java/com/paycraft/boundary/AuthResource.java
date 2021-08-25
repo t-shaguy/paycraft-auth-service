@@ -107,7 +107,7 @@ public class AuthResource {
     @Path("reset")
     @Metered(name = "reset_metered")
     public Response doReset(@Valid final JsonObject request) {
-        return Response.fromResponse(authController.doReset(request)).build();
+        return authController.doReset(request);
     }
     
     @POST
@@ -139,6 +139,34 @@ public class AuthResource {
     
     
     @POST
+    @Path("sync-profile-wtp")
+    public Response doProfileSyncWTP(final JsonObject request) {
+      
+        return profileSyncHelper.doLogWTP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+   
+    @POST
+    @Path("force-sync")
+    public Response doForceSync(final JsonObject request) {
+      
+        return profileSyncHelper.doForceSync(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
+    @POST
+    @Path("force-sync-txp")
+    public Response doForceSyncTXP(final JsonObject request) {
+      
+        return profileSyncHelper.doForceSyncTxP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
+    @POST
+    @Path("sync-txp")
+    public Response doSyncTXP(final JsonObject request) {
+      
+        return profileSyncHelper.doForceSyncTxP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
+    @POST
     @Path("sync-profile-login")
     public Response doProfileSyncAndLogin(final JsonObject request) {
       
@@ -149,7 +177,14 @@ public class AuthResource {
     @Path("maintain-profile")
     public Response doMaintain(@Valid final JsonObject request) {
 
-        return Response.fromResponse(profileSyncHelper.doSync(request)).build();
+        return profileSyncHelper.doSync(request);
+    }
+    
+    @POST
+    @Path("maintain-txp")
+    public Response doMaintainTxp(@Valid final JsonObject request) {
+
+        return profileSyncHelper.doSyncTxp(request);
     }
 
     @POST
@@ -157,6 +192,13 @@ public class AuthResource {
     public Response doVerify(@Valid final JsonObject verifyStr) {
 
         return profileSyncHelper.doVerify(verifyStr);
+    }
+    
+    @POST
+    @Path("verify-txp")
+    public Response doVerifyTxp(@Valid final JsonObject verifyStr) {
+
+        return profileSyncHelper.doVerifyTxp(verifyStr);
     }
     
     @POST
@@ -185,6 +227,21 @@ public class AuthResource {
     public Response doMaintainClient(@Valid final JsonObject request) {
 
        return authController.doSynClient(request);
+    }
+    
+    @POST
+    @Path("approve-client")
+    public Response doApproveClient(@Valid final JsonObject request) {
+
+       return authController.doApproveClient(request);
+      
+    }
+    
+    @POST
+    @Path("delete-client")
+    public Response doDeleteClient(@Valid final JsonObject request) {
+
+       return authController.doDeleteClient(request);
     }
     
     @POST

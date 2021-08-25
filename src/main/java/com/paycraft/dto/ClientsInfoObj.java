@@ -20,7 +20,7 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
     
 
     private static final long serialVersionUID = 1L;
-    private Long tid;
+    private long tid;
     private String ipAddress;
     private Boolean enforceIp;
     private BigInteger status;
@@ -30,10 +30,11 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
     private String cKey;
     private String clientName;
     private long upBy;
-    private int tokenLifespanDays;
+    private int tokenExpiryDays;
     private String partnerID;
     private String partnerCode;
     private Date lastresetDT;
+    private int clientCategory;
 
     public ClientsInfoObj() {
     }
@@ -46,7 +47,7 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
         this.tid = tid;
         this.crBy = crBy;
         this.upBy = upBy;
-        this.tokenLifespanDays = tokenLifespanDays;
+        this.tokenExpiryDays = tokenLifespanDays;
         this.partnerID = partnerID;
         this.partnerCode = partnerCode;
     }
@@ -132,13 +133,15 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
         this.upBy = upBy;
     }
 
-    public int getTokenLifespanDays() {
-        return tokenLifespanDays;
+    public int getTokenExpiryDays() {
+        return tokenExpiryDays;
     }
 
-    public void setTokenLifespanDays(int tokenLifespanDays) {
-        this.tokenLifespanDays = tokenLifespanDays;
+    public void setTokenExpiryDays(int tokenExpiryDays) {
+        this.tokenExpiryDays = tokenExpiryDays;
     }
+
+   
 
     public String getPartnerID() {
         return partnerID;
@@ -163,6 +166,14 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
     public void setLastresetDT(Date lastresetDT) {
         this.lastresetDT = lastresetDT;
     }
+
+    public int getClientCategory() {
+        return clientCategory;
+    }
+
+    public void setClientCategory(int clientCategory) {
+        this.clientCategory = clientCategory;
+    }
     
     public static String toJson(ClientsInfoObj  obj)
     {
@@ -172,7 +183,7 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
                 .add("ux",toDefault(obj.getClientName()))
                 .add("ip", toDefault(obj.getIpAddress()))
                 .add("enforceIp", obj.getEnforceIp())
-                .add("tokenExpiryDays", obj.getTokenLifespanDays())
+                .add("tokenExpiryDays", obj.getTokenExpiryDays())
                 .add("iv", toDefault(obj.getIv()))
                 .add("key", toDefault(obj.getCKey()))
                 .add("code", toDefault(obj.getCode()))
@@ -192,7 +203,7 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
                 .add("ux",toDefault(this.clientName))
                 .add("ip", toDefault(this.ipAddress))
                 .add("enforceIp", this.enforceIp)
-                .add("tokenExpiryDays", this.tokenLifespanDays)
+                .add("tokenExpiryDays", this.getTokenExpiryDays())
                 .add("iv", toDefault(this.iv))
                 .add("key", toDefault(this.cKey))
                 .add("code", toDefault(this.code))
@@ -205,7 +216,8 @@ public class ClientsInfoObj extends ResourceHelper implements Serializable {
 
     @Override
     public String toString() {
-        return "ClientsInfoObj{" + "tid=" + tid + ", ipAddress=" + ipAddress + ", enforceIp=" + enforceIp + ", status=" + status + ", crBy=" + crBy + ", code=" + code + ", iv=" + iv + ", cKey=" + cKey + ", clientName=" + clientName + ", upBy=" + upBy + ", tokenLifespanDays=" + tokenLifespanDays + ", partnerID=" + partnerID + ", partnerCode=" + partnerCode + ", lastresetDT=" + lastresetDT + '}';
+        return "ClientsInfoObj{" + "tid=" + tid + ", ipAddress=" + ipAddress + ", enforceIp=" + enforceIp + ", status=" + status + ", crBy=" + crBy + ", code=" + code + ", iv=" + iv + ", cKey=" + cKey + ", clientName=" + clientName + ", upBy=" + upBy + ", tokenLifespanDays=" + tokenExpiryDays + ", partnerID=" + partnerID + ", partnerCode=" + partnerCode + ", lastresetDT=" + lastresetDT + ", clientCategory=" + clientCategory + '}';
     }
+
 
 }

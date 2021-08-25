@@ -9,7 +9,9 @@ import com.paycraft.dto.ClientsInfoObj;
 import com.paycraft.entities.ClientsInfo;
 import com.paycraftsystems.error.messages.ErrorCodes;
 import com.paycraft.resources.KeyGenerator;
+import com.paycraft.resources.ResourceHelper;
 import com.paycraft.resources.ServiceException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -40,6 +42,8 @@ public class ClientInfoHelper {
     
     @Inject
     SysDataHelper sysDataHelper;
+    
+    ResourceHelper rh = new ResourceHelper();
     
     
     public ClientsInfo doFind(Long  tid)
@@ -117,7 +121,7 @@ public class ClientInfoHelper {
      }
     */
     
-    @Transactional
+    //@Transactional
     public ClientsInfo getByName(String userid) {
         ClientsInfo obj =  null;
         try 
@@ -140,6 +144,8 @@ public class ClientInfoHelper {
         } catch (Exception e) {
         
              e.printStackTrace();
+             
+             LOGGER.error(" Exception  getByName  --  ",e);
              
               return null;
         }
@@ -164,7 +170,7 @@ public class ClientInfoHelper {
     }
     
     
-    @Transactional
+   
     public ClientsInfo getByName(String userid, String code) {
         ClientsInfo obj =  null;
         try 
@@ -172,6 +178,63 @@ public class ClientInfoHelper {
                if(userid == null ) userid ="";
                if(code == null ) code ="";
                TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_AND_CODE, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
+                //System.out.println(" getByName query = " + query);
+                List<ClientsInfo> resultList = query.getResultList();
+                if(resultList != null && resultList.size() > 0)
+                {
+                      obj = resultList.get(0);
+                     return obj;
+                }
+                else
+                {
+                    return null;// Response.status(ErrorCodes.UNKNOWN_DOC).build();
+                }
+       
+        
+        } catch (Exception e) {
+        
+             e.printStackTrace();
+             
+              return null;
+        }
+    }
+    
+    
+    public ClientsInfo getByCredz(String userid, String code) {
+        ClientsInfo obj =  null;
+        try 
+        {
+               if(userid == null ) userid ="";
+               if(code == null ) code ="";
+               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_AND_PARTNER_ID, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
+                //System.out.println(" getByName query = " + query);
+                List<ClientsInfo> resultList = query.getResultList();
+                if(resultList != null && resultList.size() > 0)
+                {
+                      obj = resultList.get(0);
+                     return obj;
+                }
+                else
+                {
+                    return null;// Response.status(ErrorCodes.UNKNOWN_DOC).build();
+                }
+       
+        
+        } catch (Exception e) {
+        
+             e.printStackTrace();
+             
+              return null;
+        }
+    }
+    
+    public ClientsInfo getByCredzOr(String userid, String code) {
+        ClientsInfo obj =  null;
+        try 
+        {
+               if(userid == null ) userid ="";
+               if(code == null ) code ="";
+               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_OR_PARTNER_ID, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
                 //System.out.println(" getByName query = " + query);
                 List<ClientsInfo> resultList = query.getResultList();
                 if(resultList != null && resultList.size() > 0)
@@ -295,6 +358,8 @@ public class ClientInfoHelper {
                }
                //trxLog.setUpBy(obj.getUpBy());
                trxLog.setStatus(obj.getStatus());
+               trxLog.setPartnerCode(obj.getPartnerCode());
+               trxLog.setStatusStr(rh.doStatusDesc(trxLog.getStatus().intValue()));
                resp  = em.merge(trxLog);
                
             }
@@ -319,18 +384,19 @@ public class ClientInfoHelper {
         {
             
        
-            ClientsInfo trxLog = getByName(obj.getClientName(), obj.getCode());
+            ClientsInfo trxLog = getByCredzOr(obj.getClientName(), obj.getPartnerID());
             if(trxLog ==null)
             {
-                
+               
                ClientsInfo  newobj = new ClientsInfo();
                newobj.setIpAddress((obj.getIpAddress()==null || obj.getIpAddress().trim().equals(""))?"127.0.0.1":obj.getIpAddress());
                newobj.setCode(obj.getCode());
                newobj.setEnforceIp(obj.getEnforceIp());
                newobj.setClientName(obj.getClientName());
-               if(obj.getTokenLifespanDays() > 0)
+               newobj.setStatus(BigInteger.valueOf(3));
+               if(obj.getTokenExpiryDays()> 0)
                {
-                  newobj.setTokenLifespanDays(obj.getTokenLifespanDays());
+                  newobj.setTokenLifespanDays(obj.getTokenExpiryDays());
                }
                else
                {
@@ -339,10 +405,13 @@ public class ClientInfoHelper {
                newobj.setCKey("NA");
                newobj.setIv("NA");
                newobj.setPartnerCode(obj.getCode());
-               newobj.setPartnerID(obj.getCode());
+               newobj.setPartnerID(obj.getPartnerID());
                newobj.setEnforceIp(obj.getEnforceIp());
+               newobj.setClientCategory(obj.getClientCategory());
                //trxLog.setUpBy(obj.getUpBy());
-               newobj.setStatus(obj.getStatus());
+               //newobj.setStatus(obj.getStatus());
+               
+               newobj.setStatusStr(rh.doStatusDesc(newobj.getStatus().intValue()));
                resp  = em.merge(newobj);
                
                if(resp == null)
@@ -357,8 +426,159 @@ public class ClientInfoHelper {
             }
             else
             {
-                return Response.status(ErrorCodes.DUPLICATE_TRANSACTION).build();
+                //user already exists
+                return Response.status(ErrorCodes.USER_ALREADY_EXIST).build(); // ErrorCodes.DUPLICATE_TRANSACTION
             }
+           
+       
+        } catch (Exception e) {
+        
+         
+             LOGGER.error(" Exception doLog  ",e);
+            
+             return Response.status(ErrorCodes.SYSTEM_ERROR).build();
+        }
+     
+    }
+    
+    
+    @Transactional
+    public Response doSyncClient(ClientsInfoObj  obj) throws ServiceException, Exception
+    {
+        ClientsInfo resp = null;
+        ClientsInfo trxLog = null;
+        
+        try 
+        {
+            
+            if(obj !=null && obj.getTid() > 0)
+            {
+                trxLog = doFind(obj.getTid());
+            }
+            else
+            {
+                trxLog =  getByName(obj.getClientName());
+            }
+            
+            if(trxLog != null)
+            {
+                ClientsInfo byName = getByName(obj.getClientName());
+                
+                if(byName !=null && byName.getTid() != trxLog.getTid())
+                {
+                     return Response.status(831).build(); //object conflict
+                }
+                else
+                {
+                    
+                        trxLog.setClientName(obj.getClientName());
+                        trxLog.setIpAddress(obj.getIpAddress());
+                        trxLog.setCode(obj.getCode());
+                        trxLog.setTokenLifespanDays(trxLog.getTokenLifespanDays());
+
+                        trxLog.setEnforceIp(obj.getEnforceIp());
+                       // trxLog.setCKey("NA");
+                       // trxLog.setIv("NA");
+                        //trxLog.setUpBy(obj.getUpBy());
+                        trxLog.setStatus(BigInteger.ZERO);
+                        trxLog.setStatusStr(rh.doStatusDesc(trxLog.getStatus().intValue()));
+                        //trxLog.setStatus(obj.getStatus());
+                        resp  = em.merge(trxLog);
+
+                        if(resp == null)
+                        {
+                            return Response.status(ErrorCodes.DATABASE_ERROR).build();
+                        }
+                        else
+                        {
+                             return Response.ok().entity(resp.toJson()).build();
+                        }
+                }
+                
+                
+            }
+            else
+            {
+                return Response.status(ErrorCodes.INVALID_CLIENT).build();
+            }
+            
+            
+            
+       /*
+            ClientsInfo trxLog = getByName(obj.getClientName(), obj.getCode());
+            if(trxLog !=null)
+            {
+                
+               trxLog.setIpAddress(obj.getIpAddress());
+               trxLog.setCode(obj.getCode());
+               trxLog.setTokenLifespanDays(trxLog.getTokenLifespanDays());
+               
+               trxLog.setEnforceIp(obj.getEnforceIp());
+               trxLog.setCKey("NA");
+               trxLog.setIv("NA");
+               //trxLog.setUpBy(obj.getUpBy());
+               trxLog.setStatus(BigInteger.ZERO);
+               //trxLog.setStatus(obj.getStatus());
+               resp  = em.merge(trxLog);
+               
+               if(resp == null)
+               {
+                   return Response.status(ErrorCodes.DATABASE_ERROR).build();
+               }
+               else
+               {
+                    return Response.ok().entity(resp.toJson()).build();
+               }
+               
+            }
+            else
+            {
+                return Response.status(ErrorCodes.INVALID_CLIENT).build();
+            }*/
+           
+       
+        } catch (Exception e) {
+        
+            LOGGER.error(" -- Exception -- ",e);
+            //e.printStackTrace();
+            
+            return Response.status(ErrorCodes.SYSTEM_ERROR).build();
+        }
+     
+    }
+    
+    @Transactional
+    public Response doDeleteClient(ClientsInfoObj  obj) throws ServiceException, Exception
+    {
+        ClientsInfo resp = null;
+          
+        
+        try 
+        {
+            ClientsInfo trxLog = doFind(obj.getTid());
+            
+            if(trxLog != null)
+            {
+                trxLog.setStatus(BigInteger.TEN);
+                trxLog.setStatusStr(rh.doStatusDesc(trxLog.getStatus().intValue()));
+                resp  = em.merge(trxLog);
+               
+               if(resp == null)
+               {
+                   return Response.status(ErrorCodes.DATABASE_ERROR).build();
+               }
+               else
+               {
+                    return Response.ok().entity(resp.toJson()).build();
+               }
+            }
+            else
+            {
+                return Response.status(ErrorCodes.INVALID_CLIENT).build();
+            }
+       
+            
+            
            
        
         } catch (Exception e) {
@@ -372,8 +592,8 @@ public class ClientInfoHelper {
     }
     
     
-    @Transactional
-    public Response doSyncClient(ClientsInfoObj  obj) throws ServiceException, Exception
+     @Transactional
+    public Response doApproveClient(ClientsInfoObj  obj) throws ServiceException, Exception
     {
         ClientsInfo resp = null;
           
@@ -394,7 +614,8 @@ public class ClientInfoHelper {
                trxLog.setCKey("NA");
                trxLog.setIv("NA");
                //trxLog.setUpBy(obj.getUpBy());
-               trxLog.setStatus(obj.getStatus());
+               trxLog.setStatus(BigInteger.ONE);
+               trxLog.setStatusStr(rh.doStatusDesc(trxLog.getStatus().intValue()));
                resp  = em.merge(trxLog);
                
                if(resp == null)
@@ -423,6 +644,7 @@ public class ClientInfoHelper {
      
     }
     
+    
    
     
     @Transactional
@@ -435,9 +657,6 @@ public class ClientInfoHelper {
        
        return resp;
     }
-    
-    
-    
     
     
 }

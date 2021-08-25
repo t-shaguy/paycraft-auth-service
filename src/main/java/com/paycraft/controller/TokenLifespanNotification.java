@@ -51,7 +51,7 @@ public class TokenLifespanNotification {
         
         try 
         {
-            System.out.println("this = doReminder resetCron  " + LocalDateTime.now());
+            //System.out.println("this = doReminder resetCron  " + LocalDateTime.now());
         } 
         catch (Exception e) {
         

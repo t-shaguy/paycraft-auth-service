@@ -35,7 +35,9 @@ import javax.persistence.TemporalType;
     @NamedQuery(name = ClientsInfo.BY_CODE, query = "SELECT c FROM ClientsInfo c WHERE c.code = :passed"),
     @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed"),
     @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_AND_CODE, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.code =:passed2"),
-    @NamedQuery(name = ClientsInfo.BY_CREDZ, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.iv = :passed2  and c.cKey = :passed3 ")
+    @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_AND_PARTNER_ID, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.partnerID =:passed2"),
+    @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_OR_PARTNER_ID, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed or c.partnerID =:passed2"),
+    @NamedQuery(name = ClientsInfo.BY_CREDZ, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.iv = :passed2  and c.cKey = :passed3 and c.status = 1 ")
 })
 public class ClientsInfo extends ResourceHelper implements Serializable {
     
@@ -44,6 +46,8 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     public static final String BY_CODE = "ClientsInfo.findByCode";
     public static final String BY_CLIENT_NAME = "ClientsInfo.findByClientName";
     public static final String BY_CLIENT_NAME_AND_CODE = "ClientsInfo.findByClientNameAndCode";
+    public static final String BY_CLIENT_NAME_AND_PARTNER_ID = "ClientsInfo.findByClientNameAndPartnerId";
+    public static final String BY_CLIENT_NAME_OR_PARTNER_ID = "ClientsInfo.findByClientNameOrPartnerId";
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -57,6 +61,10 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     private Boolean enforceIp;
     @Column(name = "STATUS")
     private BigInteger status;
+    
+    @Column(name="status_str")
+    private String statusStr;
+    
     @Column(name = "CR_DT")
     @Temporal(TemporalType.TIMESTAMP)
     private Date crDt;
@@ -89,6 +97,9 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     @Column(name = "last_reset_DT")
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastresetDT;
+    @Basic(optional = false)
+    @Column(name = "client_cat", columnDefinition="int(11) default 0")
+    private Integer clientCategory;
 
     public ClientsInfo() {
     }
@@ -233,6 +244,24 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     public void setLastresetDT(Date lastresetDT) {
         this.lastresetDT = lastresetDT;
     }
+
+    public String getStatusStr() {
+        return statusStr;
+    }
+
+    public void setStatusStr(String statusStr) {
+        this.statusStr = statusStr;
+    }
+
+    public Integer getClientCategory() {
+        return clientCategory;
+    }
+
+    public void setClientCategory(Integer clientCategory) {
+        this.clientCategory = clientCategory;
+    }
+    
+    
     
     public static String toJson(ClientsInfo  obj)
     {
@@ -246,7 +275,10 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
                 .add("iv", toDefault(obj.getIv()))
                 .add("key", toDefault(obj.getCKey()))
                 .add("code", toDefault(obj.getCode()))
+                .add("categoryDesc", doCategoryDescription(obj.clientCategory))
+                .add("clientCategory", obj.clientCategory==null?0:obj.clientCategory)
                 .add("partnerCode", toDefault(obj.partnerCode))
+                .add("statusStr", toDefault(obj.getStatusStr()))
                 .add("partnerId", toDefault(obj.partnerID))
                 
                 
@@ -260,12 +292,15 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
         return Json.createObjectBuilder()
                 .add("tid",this.tid)
                 .add("clientName",toDefault(this.clientName))
-                .add("IpAddress", toDefault(this.ipAddress))
+                .add("ipAddress", toDefault(this.ipAddress))
                 .add("enforceIp", (this.enforceIp==null)?false:true)
                 .add("tokenLifespanDays", this.tokenLifespanDays)
                 .add("iv", toDefault(this.iv))
                 .add("key", toDefault(this.cKey))
                 .add("code", toDefault(this.code))
+                .add("statusStr", toDefault(this.statusStr))
+                .add("categoryDesc", doCategoryDescription(this.clientCategory))
+                .add("clientCategory", this.clientCategory)
                 .add("partnerCode", toDefault(this.partnerCode))
                 .add("partnerId", toDefault(this.partnerID))
                 
@@ -281,7 +316,8 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
         {
              job.add("tid",this.tid)
                 .add("clientName",toDefault(this.clientName))
-                .add("IpAddress", toDefault(this.ipAddress))
+                .add("ux",toDefault(this.clientName))
+                .add("ipAddress", toDefault(this.ipAddress))
                 .add("enforceIp", this.enforceIp==null?false:this.enforceIp)
                 .add("tokenLifespanDays", this.tokenLifespanDays)
                 .add("iv", (this.iv !=null && this.iv.trim().length() ==16)?"DATA-PRIVACY":"NA")
@@ -289,6 +325,9 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
                 .add("code", toDefault(this.code))
                 .add("lastResetDate", toDefault(this.lastresetDT))
                 .add("partnerCode", toDefault(this.partnerCode))
+                .add("statusStr", toDefault(this.statusStr))
+                .add("categoryDesc", doCategoryDescription(this.clientCategory))
+                .add("clientCategory", this.clientCategory)
                 .add("partnerId", toDefault(this.partnerID));
             
         } catch (Exception e) {

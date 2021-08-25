@@ -39,12 +39,18 @@ import javax.persistence.TemporalType;
     @NamedQuery(name = ProfileSync.ALL, query = "SELECT p FROM ProfileSync p"),
     @NamedQuery(name =  ProfileSync.BY_CODE, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2"),
     @NamedQuery(name =  ProfileSync.BY_CODE_AND_HASH, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.vHash = :passed3"),
+    @NamedQuery(name =  ProfileSync.BY_CODE_AND_HASH2, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.vHash2 = :passed3"),
+    @NamedQuery(name =  ProfileSync.BY_CODE_AND_TXP_HASH2, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.vHash2 = :passed2"),
+    @NamedQuery(name =  ProfileSync.BY_CODE_OR_MSISDN_AND_TXP_HASH2, query = "SELECT p FROM ProfileSync p WHERE (p.code = :passed or p.msisdn = :passed)   and p.vHash2 = :passed2"),
 })
 public class ProfileSync implements Serializable {
     
     public static final String ALL = "ProfileSync.findAll";
     public static final String BY_CODE = "ProfileSync.findByCodeNLink";
     public static final String BY_CODE_AND_HASH = "ProfileSync.findByCodeNHash";
+    public static final String BY_CODE_AND_HASH2 = "ProfileSync.findByCodeNHash2";
+    public static final String BY_CODE_AND_TXP_HASH2 = "ProfileSync.findByCodeNTxpHash2";
+    public static final String BY_CODE_OR_MSISDN_AND_TXP_HASH2 = "ProfileSync.findByCodeOrMSISDNTxpHash2";
     
     private static final long serialVersionUID = 1L;
     @Id
@@ -78,6 +84,11 @@ public class ProfileSync implements Serializable {
     @Column(name = "v_hash_1")
     private String vHash1;
     
+    @Basic(optional = false)
+    @Lob
+    @Column(name = "v_hash_2")
+    private String vHash2;
+    
     @Column(name = "control_code")
     private String controlCode;
     
@@ -90,6 +101,10 @@ public class ProfileSync implements Serializable {
     @Column(name = "sync_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date syncDate;
+    
+    @Column(name = "px_change_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date pxChangeDate;
     
     @Column(name = "modified_date")
     @Temporal(TemporalType.TIMESTAMP)
@@ -224,8 +239,22 @@ public class ProfileSync implements Serializable {
     public void setControlCode(String controlCode) {
         this.controlCode = controlCode;
     }
-    
-    
+
+    public String getVHash2() {
+        return vHash2;
+    }
+
+    public void setVHash2(String vHash2) {
+        this.vHash2 = vHash2;
+    }
+
+    public Date getPxChangeDate() {
+        return pxChangeDate;
+    }
+
+    public void setPxChangeDate(Date pxChangeDate) {
+        this.pxChangeDate = pxChangeDate;
+    }
     
     
     public JsonObject toJson() {
@@ -307,7 +336,7 @@ public class ProfileSync implements Serializable {
 
     @Override
     public String toString() {
-        return "ProfileSync{" + "tid=" + tid + ", code=" + code + ", msisdn=" + msisdn + ", codeLink=" + codeLink + ", userCode=" + userCode + ", pid=" + pid + ", vHash=" + vHash + ", vHash1=" + vHash1 + ", controlCode=" + controlCode + ", class1=" + class1 + ", profileAuditList=" + profileAuditList + ", syncDate=" + syncDate + ", modifiedDate=" + modifiedDate + ", lastAccessDate=" + lastAccessDate + '}';
+        return "ProfileSync{" + "tid=" + tid + ", code=" + code + ", msisdn=" + msisdn + ", codeLink=" + codeLink + ", userCode=" + userCode + ", pid=" + pid + ", vHash=" + vHash + ", vHash1=" + vHash1 + ", vHash2=" + vHash2 + ", controlCode=" + controlCode + ", class1=" + class1 + ", profileAuditList=" + profileAuditList + ", syncDate=" + syncDate + ", pxChangeDate=" + pxChangeDate + ", modifiedDate=" + modifiedDate + ", lastAccessDate=" + lastAccessDate + '}';
     }
 
 }

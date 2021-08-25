@@ -16,7 +16,10 @@ public class ProfileSyncOBJ {
     private String codeLink;
     private String password;
     private String verifyPassword;
+    private String pin;
+    private String verifyPin;
     private String newPassword;
+    private String newPin;
     private String msisdn;
     private String userCode;
     private long pid;
@@ -94,9 +97,34 @@ public class ProfileSyncOBJ {
         this.controlCode = controlCode;
     }
 
+    public String getPin() {
+        return pin;
+    }
+
+    public void setPin(String pin) {
+        this.pin = pin;
+    }
+
+    public String getVerifyPin() {
+        return verifyPin;
+    }
+
+    public void setVerifyPin(String verifyPin) {
+        this.verifyPin = verifyPin;
+    }
+
+    public String getNewPin() {
+        return newPin;
+    }
+
+    public void setNewPin(String newPin) {
+        this.newPin = newPin;
+    }
+
     @Override
     public String toString() {
-        return "ProfileSyncOBJ{" + "code=" + code + ", codeLink=" + codeLink + ", password=" + password + ", verifyPassword=" + verifyPassword + ", newPassword=" + newPassword + ", msisdn=" + msisdn + ", userCode=" + userCode + ", pid=" + pid + ", controlCode=" + controlCode + '}';
+        return "ProfileSyncOBJ{" + "code=" + code + ", codeLink=" + codeLink + ", password=" + password + ", verifyPassword=" + verifyPassword + ", pin=" + pin + ", verifyPin=" + verifyPin + ", newPassword=" + newPassword + ", newPin=" + newPin + ", msisdn=" + msisdn + ", userCode=" + userCode + ", pid=" + pid + ", controlCode=" + controlCode + '}';
     }
+
    
 }

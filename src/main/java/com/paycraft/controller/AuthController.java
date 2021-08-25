@@ -11,6 +11,7 @@ import com.paycraft.entities.ClientsInfo;
 import com.paycraft.resources.RandomCharacter;
 import com.paycraft.resources.ResourceHelper;
 import com.paycraftsystems.error.messages.ErrorCodes;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.logging.Logger;
 import static java.util.stream.Collectors.toList;
@@ -64,6 +65,7 @@ public class AuthController {
     @Inject
     SysDataHelper sysPropsController;
     
+    ResourceHelper rh = new ResourceHelper();
     
     @Inject
     Logger logger;
@@ -238,18 +240,20 @@ public class AuthController {
         try 
         {
             doLoginObj = JsonbBuilder.create().fromJson(jsonRequest.toString(), LoginObj.class);
-            LOGGER.info("parseRequest = " + doLoginObj);
+            LOGGER.info("@@@@*** parseRequest doReset = " + doLoginObj);
             
             activityby = doLoginObj.getUx();
             
             ClientsInfo byUniqueID = clientInfoHelper.getByName(doLoginObj.getUx());
-            
+            LOGGER.info("@@@@*** parseRequest byUniqueID = " + byUniqueID);
              if(byUniqueID !=null)
              { 
                    ivee = RandomCharacter.doRandomPass(16);
                    key = RandomCharacter.doRandomPass(16);
                    byUniqueID.setIv(ivee);
                    byUniqueID.setCKey(key);
+                   byUniqueID.setStatus(BigInteger.ONE);
+                   byUniqueID.setStatusStr(rh.doStatusDesc(byUniqueID.getStatus().intValue()));
                    ClientsInfo doSync = clientInfoHelper.doSync(byUniqueID);
                   
                    if(doSync == null)
@@ -306,7 +310,7 @@ public class AuthController {
         }*/
         catch (Exception e) 
         {
-             e.printStackTrace();
+            LOGGER.error(" Exceptiom in doReset ",e);
             
             jsonObject = Json.createObjectBuilder().add("responseDesc", "System errror "+e.getMessage()).add("iv", "").add("key", "").build();
            
@@ -609,9 +613,16 @@ public class AuthController {
             // Return the token on the response
             //return Response.ok().header(AUTHORIZATION, "Bearer " + token).build();
             
-           return Response.ok(Json.createObjectBuilder().add(AUTHORIZATION, "Bearer " + token).build().toString()).header(AUTHORIZATION, "Bearer " + token).build();
-           
-
+            if(token !=null)
+            {
+                return Response.accepted(Json.createObjectBuilder().add(AUTHORIZATION, "Bearer " + token).build().toString()).header(AUTHORIZATION, "Bearer " + token).build();
+            
+            
+            }
+            else
+            {
+                return Response.status(ErrorCodes.SYSTEM_ERROR).build();
+            }
         }/*
         catch (JsonGenerationException | JsonMappingException e) 
         {
@@ -625,6 +636,7 @@ public class AuthController {
         }*/
         catch (Exception e) 
         {
+            LOGGER.info(" --doLogin - ",e);
             //e.printStackTrace();
             return Response.status(ErrorCodes.INVALID_CLIENT).header("responseDesc", e.getMessage()).build();
         }
@@ -633,7 +645,7 @@ public class AuthController {
     
     public Response doLogin(final String jsonRequest) {
 
-        LOGGER.info("  #### on the service layer .... "+jsonRequest);
+        LOGGER.info("  #### on the service layer @@@@.... "+jsonRequest);
         LoginObj doLoginObj = null;
         try 
         {
@@ -642,7 +654,7 @@ public class AuthController {
             
             ClientsInfo byCredentials = clientInfoHelper.getByCredentials(doLoginObj.getUx(), doLoginObj.getIv(), doLoginObj.getKey());
           
-            LOGGER.info(" ### byCredentials = " + byCredentials);
+            //LOGGER.info(" ### byCredentials = " + byCredentials);
            
             if(byCredentials == null)
             {
@@ -685,6 +697,7 @@ public class AuthController {
         }*/
         catch (Exception e) 
         {
+            LOGGER.info(" --doLogin Exception --  ",e);
             //e.printStackTrace();
             return Response.status(ErrorCodes.INVALID_CLIENT).entity(Json.createObjectBuilder().add("responseDesc", e.getMessage()).build()).build();
         }
@@ -703,7 +716,7 @@ public class AuthController {
             
             ClientsInfo byCredentials = clientInfoHelper.getByCredentials(doLoginObj.getUx(), doLoginObj.getIv(), doLoginObj.getKey());
           
-            LOGGER.info(" ### byCredentials = " + byCredentials);
+            //LOGGER.info(" ### byCredentials = " + byCredentials);
            
             if(byCredentials == null)
             {
@@ -757,7 +770,7 @@ public class AuthController {
             doClientObj = JsonbBuilder.create().fromJson(jsonRequest.toString(), ClientsInfoObj.class);
             
            
-            LOGGER.info(" ### byCredentials = " + doClientObj);
+           // LOGGER.info(" ### byCredentials = " + doClientObj);
            
             if(doClientObj == null)
             {
@@ -770,11 +783,11 @@ public class AuthController {
                  return Response.status(ErrorCodes.INVALID_CLIENT).build();
             }
             
-            if(doClientObj.getCode() == null || doClientObj.getCode().trim().equals("") || doClientObj.getCode().trim().length() > 4)
+            if(doClientObj.getPartnerCode() == null || doClientObj.getPartnerCode().trim().equals("") || doClientObj.getPartnerCode().trim().length() > 40)
             {
-                 return Response.status(ErrorCodes.INVALID_USER_CODE).build();
+                 return Response.status(ErrorCodes.INVALID_PARTNER_CODE).build();
             }
-
+            
 
             return  clientInfoHelper.doLog(doClientObj);
          
@@ -782,6 +795,7 @@ public class AuthController {
         catch (Exception e) 
         {
             //e.printStackTrace();
+            LOGGER.error(" Exception ERROR  @ 1 ", e);
             return Response.status(ErrorCodes.INVALID_CLIENT).entity(Json.createObjectBuilder().add("responseDesc", e.getMessage()).build()).build();
         }
     }
@@ -811,9 +825,76 @@ public class AuthController {
         catch (Exception e) 
         {
             //e.printStackTrace();
+            
+            LOGGER.info("-- doSynClient -- ",e);
             return Response.status(ErrorCodes.INVALID_CLIENT).entity(Json.createObjectBuilder().add("responseDesc", e.getMessage()).build()).build();
         }
     }
+     
+     public Response doDeleteClient(JsonObject jsonRequest) {
+
+        LOGGER.info("  #### on the service layer doDeleteClient.... "+jsonRequest);
+        ClientsInfoObj doClientObj = null;
+        try 
+        {
+            
+         
+            doClientObj = JsonbBuilder.create().fromJson(jsonRequest.toString(), ClientsInfoObj.class);
+            
+           
+            LOGGER.info(" ### doDeleteClient byCredentials = " + doClientObj);
+           
+            if(doClientObj == null)
+            {
+             
+                return Response.status(ErrorCodes.INVALID_JSON_FORMAT).build();
+            }
+          
+
+            return  clientInfoHelper.doDeleteClient(doClientObj);
+         
+        }
+        catch (Exception e) 
+        {
+             LOGGER.info("-- doDeleteClient -- ",e);
+            //e.printStackTrace();
+            return Response.status(ErrorCodes.INVALID_CLIENT).entity(Json.createObjectBuilder().add("responseDesc", e.getMessage()).build()).build();
+        }
+    }
+     
+     
+    public Response doApproveClient(JsonObject jsonRequest) {
+
+        LOGGER.info("  #### on the service layer doApproveClient.... "+jsonRequest);
+        ClientsInfoObj doClientObj = null;
+        try 
+        {
+            
+         
+            doClientObj = JsonbBuilder.create().fromJson(jsonRequest.toString(), ClientsInfoObj.class);
+            
+           
+            LOGGER.info(" ### doApproveClient byCredentials = " + doClientObj);
+           
+            if(doClientObj == null)
+            {
+             
+                return Response.status(ErrorCodes.INVALID_JSON_FORMAT).build();
+            }
+          
+
+            return  clientInfoHelper.doApproveClient(doClientObj);
+          
+         
+        }
+        catch (Exception e) 
+        {
+             LOGGER.info("-- doDeleteClient -- ",e);
+            //e.printStackTrace();
+            return Response.status(ErrorCodes.INVALID_CLIENT).entity(Json.createObjectBuilder().add("responseDesc", e.getMessage()).build()).build();
+        }
+    }
+    
     
     
     
@@ -822,10 +903,9 @@ public class AuthController {
         try 
         {
             
-            
             List<ClientsInfo> byCredentials = clientInfoHelper.doListAllClients();
           
-            LOGGER.info(" ### byCredentials = " + byCredentials);
+           // LOGGER.info(" ### byCredentials = " + byCredentials);
            
             if(byCredentials != null && !byCredentials.isEmpty())
             {
@@ -856,7 +936,7 @@ public class AuthController {
             
             List<ClientsInfo> byCredentials = clientInfoHelper.doListAllClients();
           
-            LOGGER.info(" ### byCredentials = " + byCredentials);
+           // LOGGER.info(" ### byCredentials = " + byCredentials);
            
             if(byCredentials != null && !byCredentials.isEmpty())
             {
@@ -887,7 +967,7 @@ public class AuthController {
             
             ClientsInfo byCredentials = clientInfoHelper.getByName(clientName);
           
-            LOGGER.info(" ### byCredentials = " + byCredentials);
+           // LOGGER.info(" ### byCredentials = " + byCredentials);
            
             if(byCredentials != null )
             {
@@ -915,7 +995,7 @@ public class AuthController {
             
             ClientsInfo byCredentials = clientInfoHelper.doFind(tid);
           
-            LOGGER.info(" ### byCredentials = " + byCredentials);
+           // LOGGER.info(" ### byCredentials = " + byCredentials);
            
             if(byCredentials != null )
             {
