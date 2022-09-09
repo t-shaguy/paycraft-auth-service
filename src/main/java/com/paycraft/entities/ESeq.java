@@ -5,6 +5,7 @@
  */
 package com.paycraft.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import java.io.Serializable;
 import java.math.BigInteger;
 import javax.persistence.Basic;
@@ -29,20 +30,20 @@ import javax.persistence.Table;
     @NamedQuery(name = "ESeq.findBySeqCode", query = "SELECT e FROM ESeq e WHERE e.seqCode = :seqCode"),
     @NamedQuery(name = "ESeq.findByLastSeq", query = "SELECT e FROM ESeq e WHERE e.lastSeq = :lastSeq"),
     @NamedQuery(name = "ESeq.findByLength", query = "SELECT e FROM ESeq e WHERE e.length = :length")})
-public class ESeq implements Serializable {
+public class ESeq extends PanacheEntityBase implements Serializable {
 
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Basic(optional = false)
     @Column(name = "TID")
-    private Long tid;
+    public Long tid;
     @Column(name = "SEQ_CODE")
-    private String seqCode;
+    public String seqCode;
     @Column(name = "LAST_SEQ")
-    private BigInteger lastSeq;
+    public BigInteger lastSeq;
     @Column(name = "LENGTH")
-    private Integer length;
+    public int length;
 
     public ESeq() {
     }
@@ -51,37 +52,12 @@ public class ESeq implements Serializable {
         this.tid = tid;
     }
 
-    public Long getTid() {
-        return tid;
+    
+    public static ESeq findBySeqCode(String code)
+    {
+        return find("seqCode", code).firstResult();
     }
-
-    public void setTid(Long tid) {
-        this.tid = tid;
-    }
-
-    public String getSeqCode() {
-        return seqCode;
-    }
-
-    public void setSeqCode(String seqCode) {
-        this.seqCode = seqCode;
-    }
-
-    public BigInteger getLastSeq() {
-        return lastSeq;
-    }
-
-    public void setLastSeq(BigInteger lastSeq) {
-        this.lastSeq = lastSeq;
-    }
-
-    public Integer getLength() {
-        return length;
-    }
-
-    public void setLength(Integer length) {
-        this.length = length;
-    }
+   
 
     @Override
     public int hashCode() {

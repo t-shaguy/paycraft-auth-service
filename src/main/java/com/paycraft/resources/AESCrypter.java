@@ -97,7 +97,7 @@ public class AESCrypter {
     public String encrypt(String text) throws SecException
     {
          
-        //System.out.println("text = " + text);
+       // System.err.println("text ss= " + text);
         
         if(text == null || text.length() == 0) {
             throw new SecException("Empty string");

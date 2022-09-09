@@ -28,6 +28,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -44,6 +46,8 @@ import javax.persistence.TemporalType;
     @NamedQuery(name =  ProfileSync.BY_CODE_OR_MSISDN_AND_TXP_HASH2, query = "SELECT p FROM ProfileSync p WHERE (p.code = :passed or p.msisdn = :passed)   and p.vHash2 = :passed2"),
 })
 public class ProfileSync implements Serializable {
+    
+    private static Logger LOGGER =  LoggerFactory.getLogger(ProfileSync.class);
     
     public static final String ALL = "ProfileSync.findAll";
     public static final String BY_CODE = "ProfileSync.findByCodeNLink";
@@ -277,7 +281,9 @@ public class ProfileSync implements Serializable {
             
         } catch (Exception e) {
         
-            e.printStackTrace();
+           // e.printStackTrace();
+            
+            LOGGER.error(" --  Exception toJson() --", e);
         
         }
         
@@ -306,7 +312,9 @@ public class ProfileSync implements Serializable {
             
         } catch (Exception e) {
         
-            e.printStackTrace();
+           // e.printStackTrace();
+            
+            LOGGER.error(" --  Exception toJson(--) --", e);
         
         }
         

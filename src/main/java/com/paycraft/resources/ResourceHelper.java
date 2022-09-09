@@ -5,6 +5,7 @@
  */
 package com.paycraft.resources;
 
+import com.paycraft.controller.ClientInfoHelper;
 import com.paycraft.dto.ProfileSyncOBJ;
 import com.paycraft.entities.ProfileSync;
 import java.security.MessageDigest;
@@ -12,12 +13,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author root
  */
 public class ResourceHelper {
+    
+    private static Logger LOGGER = LoggerFactory.getLogger(ResourceHelper.class);
     
     
     public static final String EMAIL_REGEX = "(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])";
@@ -82,6 +87,7 @@ public class ResourceHelper {
     
     public String doVerifyPassword(String key, String iv, ProfileSyncOBJ obj) throws SecException {
         String tohash = obj.getCode()+obj.getCodeLink()+obj.getPassword();
+        LOGGER.error(":#: doVerifyPassword: tohash "+tohash);
         return  new AESCrypter(key, iv).encrypt(tohash);
     }
     
@@ -196,6 +202,26 @@ public class ResourceHelper {
        
         }
      return desc;
+    }
+    
+      public  String padZero(int i)
+    {
+      String intzero = "";
+      for (int j = 0; j < i; j++) {
+        intzero = intzero + "0";
+      }
+      return intzero;
+    }
+    
+    
+    public  String padZero(int i, String sequenceNo)
+    {
+      String intzero = "";
+      i = (i - sequenceNo.trim().length());
+      for (int j = 0; j < i; j++) {
+        intzero = intzero + "0";
+      }
+      return intzero+sequenceNo;
     }
     
     

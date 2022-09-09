@@ -12,46 +12,22 @@ package com.paycraft.dto;
 public class LoginObj {
     
     
-    private String ux;
-    private String iv;
-    private String key;
-
-    public LoginObj() {
-    }
-
-    public LoginObj(String user, String password, String randomTok) {
-        this.ux = user;
-        this.iv = password;
-        this.key = randomTok;
-    }
-    
-    public String getUx() {
-        return ux;
-    }
-
-    public void setUx(String user) {
-        this.ux = user;
-    }
-
-    public String getIv() {
-        return iv;
-    }
-
-    public void setIv(String iv) {
-        this.iv = iv;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
+    public String ux;
+    public String iv;
+    public String key;
+    public int clientCategory;
+    public long providerId;
+    public String providerStr;
+    public String customerCode;
 
     @Override
     public String toString() {
-        return "LoginObj{" + "ux=" + ux + ", iv=" + iv + ", key=" + key + '}';
+        return "LoginObj{" + "ux=" + ux + ", iv=" + iv + ", key=" + key + ", clientCategory=" + clientCategory + ", providerId=" + providerId + ", providerStr=" + providerStr + ", customerCode=" + customerCode + '}';
     }
+    
+    
 
+    
+   
+    
 }

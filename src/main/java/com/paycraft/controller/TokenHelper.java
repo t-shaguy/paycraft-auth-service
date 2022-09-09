@@ -7,6 +7,7 @@ package com.paycraft.controller;
 
 
 
+import com.paycraft.dto.LoginObj;
 import com.paycraft.entities.ClientsInfo;
 import com.paycraft.entities.ProfileSync;
 import com.paycraft.resources.AESCrypter;
@@ -95,9 +96,51 @@ public class TokenHelper
 
     }
     
+    public String issueToken(ClientsInfo cinfo, LoginObj doLoginObj, UriInfo uriInfo) throws ServiceException, SecException 
+    {
+        LOGGER.info(" --  ############ uriInfo = " + cinfo);
+        System.out.println("doLoginObj = " + doLoginObj);
+         String jwtToken =  null;
+        try 
+        {
+             Key key = keyGenerator.generateKey(sysPropsController.getProps("SYS_IV"), sysPropsController.getProps("SYS_KEY"));
+             
+               System.out.println("issueToken sub checkes "+doLoginObj+" =to pass # " + ClientsInfo.toJson(cinfo, doLoginObj));
+               System.out.println("TOKEN NEXT XPRIRARTION = " + LocalDateTime.now().plusDays(cinfo.getTokenLifespanDays()));
+               jwtToken = Jwts.builder()
+                   
+                .setSubject(new AESCrypter(sysPropsController.getProps("SYS_KEY"),sysPropsController.getProps("SYS_IV")).encrypt(ClientsInfo.toJson(cinfo, doLoginObj))) 
+                .setIssuer("")//uriInfo.getAbsolutePath().toString())
+                .setIssuedAt(new Date())
+                
+                .setExpiration(toDate(LocalDateTime.now().plusDays(cinfo.getTokenLifespanDays()))) //.plusMinutes(15L)
+                .signWith(SignatureAlgorithm.HS512, key)
+                .compact();
+        LOGGER.info("#### generating token for a key : " + jwtToken + " - " + key);
+            
+        }
+        catch (NullPointerException e) {
+       
+            //e.printStackTrace();
+            
+           LOGGER.info("   ############ NullPointerException issueToken = ",e);
+        
+        }
+        catch (Exception e) {
+       
+            //e.printStackTrace();
+            
+           LOGGER.info("   ############ Exception issueToken = ",e);
+        
+        }
+       
+        return jwtToken;
+
+    }
+    
     public String issueToken(ClientsInfo cinfo, UriInfo uriInfo) throws ServiceException, SecException 
     {
-        LOGGER.info("   ############ uriInfo = " + cinfo);
+        LOGGER.info(" --  ############ uriInfo = " + cinfo);
          String jwtToken =  null;
         try 
         {
@@ -111,9 +154,19 @@ public class TokenHelper
                 .compact();
         LOGGER.info("#### generating token for a key : " + jwtToken + " - " + key);
             
-        } catch (Exception e) {
+        }
+        catch (NullPointerException e) {
        
-            e.printStackTrace();
+            //e.printStackTrace();
+            
+           LOGGER.info("   ############ NullPointerException issueToken = ",e);
+        
+        }
+        catch (Exception e) {
+       
+            //e.printStackTrace();
+            
+           LOGGER.info("   ############ Exception issueToken = ",e);
         
         }
        
@@ -123,7 +176,7 @@ public class TokenHelper
     
     public String issueToken(ProfileSync profile, UriInfo uriInfo) throws ServiceException, SecException 
     {
-        LOGGER.info("   ############ uriInfo = " + profile);
+        LOGGER.info(" $$ @@@ ############ uriInfo = " + profile);
          String jwtToken =  null;
         try 
         {
@@ -135,11 +188,14 @@ public class TokenHelper
                 .setExpiration(toDate(LocalDateTime.now().plusDays(1))) //.plusMinutes(15L)
                 .signWith(SignatureAlgorithm.HS512, key)
                 .compact();
-        LOGGER.info("#### generating token for a key : " + jwtToken + " - " + key);
+        LOGGER.info("-->#### generating token for a key : " + jwtToken + " - " + key);
             
         } catch (Exception e) {
        
-            e.printStackTrace();
+            //e.printStackTrace();
+            
+            LOGGER.info(" --  ############ Exception issueToken = ",e);
+        
         
         }
        

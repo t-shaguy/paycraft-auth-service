@@ -5,6 +5,7 @@
  */
 package com.paycraft.entities;
 
+import com.paycraft.dto.LoginObj;
 import com.paycraft.resources.ResourceHelper;
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -36,7 +37,9 @@ import javax.persistence.TemporalType;
     @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed"),
     @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_AND_CODE, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.code =:passed2"),
     @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_AND_PARTNER_ID, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.partnerID =:passed2"),
-    @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_OR_PARTNER_ID, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed or c.partnerID =:passed2"),
+    @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_AND_PARTNER_CODE, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.partnerCode =:passed2"),
+   @NamedQuery(name = ClientsInfo.BY_CLIENT_NAME_OR_PARTNER_ID, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed or c.partnerID =:passed2"),
+    @NamedQuery(name = ClientsInfo.BY_PARTNER_CODE, query = "SELECT c FROM ClientsInfo c WHERE  c.partnerCode =:passed"),
     @NamedQuery(name = ClientsInfo.BY_CREDZ, query = "SELECT c FROM ClientsInfo c WHERE c.clientName = :passed and c.iv = :passed2  and c.cKey = :passed3 and c.status = 1 ")
 })
 public class ClientsInfo extends ResourceHelper implements Serializable {
@@ -47,6 +50,9 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     public static final String BY_CLIENT_NAME = "ClientsInfo.findByClientName";
     public static final String BY_CLIENT_NAME_AND_CODE = "ClientsInfo.findByClientNameAndCode";
     public static final String BY_CLIENT_NAME_AND_PARTNER_ID = "ClientsInfo.findByClientNameAndPartnerId";
+    public static final String BY_CLIENT_NAME_AND_PARTNER_CODE = "ClientsInfo.findByClientNameAndPartnerCode";
+    
+    public static final String BY_PARTNER_CODE = "ClientsInfo.findByPartnerCode";
     public static final String BY_CLIENT_NAME_OR_PARTNER_ID = "ClientsInfo.findByClientNameOrPartnerId";
 
     private static final long serialVersionUID = 1L;
@@ -100,6 +106,9 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     @Basic(optional = false)
     @Column(name = "client_cat", columnDefinition="int(11) default 0")
     private Integer clientCategory;
+    
+    @Column(name="fee_code")
+    private String feeCode;
 
     public ClientsInfo() {
     }
@@ -263,6 +272,32 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     
     
     
+    public static String toJson(ClientsInfo  obj, LoginObj doLoginObj)
+    {
+        System.out.println("on jsons doLoginObj = " +doLoginObj);
+        return Json.createObjectBuilder()
+                .add("tid",obj.getTid())
+                .add("clientName",toDefault(obj.getClientName()))
+                .add("ip", toDefault(obj.getIpAddress()))
+                .add("enforceIp", obj.getEnforceIp()==null?false:obj.getEnforceIp())
+                .add("tokenLifespanDays", obj.getTokenLifespanDays())
+                .add("iv", toDefault(obj.getIv()))
+                .add("key", toDefault(obj.getCKey()))
+                .add("code", toDefault(obj.getCode()))
+                .add("categoryDesc", doCategoryDescription(obj.clientCategory))
+                .add("clientCategory", obj.clientCategory==null?0:obj.clientCategory)
+                .add("partnerCode", toDefault(obj.partnerCode))
+                .add("customerCode", toDefault(doLoginObj.customerCode))
+                .add("statusStr", toDefault(obj.getStatusStr()))
+                .add("providerId", doLoginObj.providerId)
+                .add("providerStr", toDefault(doLoginObj.providerStr))
+                .add("partnerId", toDefault(obj.partnerID))
+                
+                
+       .build().toString();
+       
+    }
+    
     public static String toJson(ClientsInfo  obj)
     {
         
@@ -270,7 +305,7 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
                 .add("tid",obj.getTid())
                 .add("clientName",toDefault(obj.getClientName()))
                 .add("ip", toDefault(obj.getIpAddress()))
-                .add("enforceIp", obj.getEnforceIp())
+                .add("enforceIp", obj.getEnforceIp()==null?false:obj.getEnforceIp())
                 .add("tokenLifespanDays", obj.getTokenLifespanDays())
                 .add("iv", toDefault(obj.getIv()))
                 .add("key", toDefault(obj.getCKey()))
@@ -286,26 +321,29 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
        
     }
     
-     public String toJson()
+     public JsonObject toJson()
     {
-        
-        return Json.createObjectBuilder()
-                .add("tid",this.tid)
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        try 
+        {
+                job.add("tid",this.tid)
                 .add("clientName",toDefault(this.clientName))
                 .add("ipAddress", toDefault(this.ipAddress))
-                .add("enforceIp", (this.enforceIp==null)?false:true)
+                .add("enforceIp", (this.enforceIp==null)?false:this.enforceIp)
                 .add("tokenLifespanDays", this.tokenLifespanDays)
                 .add("iv", toDefault(this.iv))
                 .add("key", toDefault(this.cKey))
                 .add("code", toDefault(this.code))
                 .add("statusStr", toDefault(this.statusStr))
-                .add("categoryDesc", doCategoryDescription(this.clientCategory))
-                .add("clientCategory", this.clientCategory)
+               // .add("categoryDesc", doCategoryDescription(this.clientCategory)) 
+               // .add("clientCategory", this.clientCategory)
                 .add("partnerCode", toDefault(this.partnerCode))
-                .add("partnerId", toDefault(this.partnerID))
-                
-       .build().toString();
-       
+                .add("partnerId", toDefault(this.partnerID));
+            
+        } 
+        catch (Exception e) {
+        }
+      return job.build();
     }
      
     public JsonObject toJsonTrim()
@@ -325,6 +363,7 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
                 .add("code", toDefault(this.code))
                 .add("lastResetDate", toDefault(this.lastresetDT))
                 .add("partnerCode", toDefault(this.partnerCode))
+                .add("feeCode", toDefault(this.feeCode))
                 .add("statusStr", toDefault(this.statusStr))
                 .add("categoryDesc", doCategoryDescription(this.clientCategory))
                 .add("clientCategory", this.clientCategory)
@@ -367,7 +406,10 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
 
     @Override
     public String toString() {
-        return "com.paycraftsystems.digitalbank.auth.entities.ClientsInfo[ tid=" + tid + " ]";
+        return "ClientsInfo{" + "tid=" + tid + ", ipAddress=" + ipAddress + ", enforceIp=" + enforceIp + ", status=" + status + ", statusStr=" + statusStr + ", crDt=" + crDt + ", crBy=" + crBy + ", upDt=" + upDt + ", code=" + code + ", iv=" + iv + ", cKey=" + cKey + ", clientName=" + clientName + ", upBy=" + upBy + ", tokenLifespanDays=" + tokenLifespanDays + ", partnerID=" + partnerID + ", partnerCode=" + partnerCode + ", lastresetDT=" + lastresetDT + ", clientCategory=" + clientCategory + ", feeCode=" + feeCode + '}';
     }
+
+   
+    
     
 }

@@ -108,7 +108,11 @@ public class ProfileSyncHelper {
         ProfileSync obj =  null;
         try 
         { 
-               LOGGER.info("ProfileSyncOBJ = " + objx);
+               LOGGER.info("#ProfileSyncOBJ = " + objx);
+               
+                //LOGGER.info(" -- KEY -- "+sysDataHelper.getProps("SYS_KEY", "~")+" + IV + "+sysDataHelper.getProps("SYS_IV", "~"));
+                LOGGER.info("-- ProfileSyncOBJ Paxx = " + rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
+               
                //LOGGER.info(" plain pass  = " + rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
                TypedQuery<ProfileSync> query = em.createNamedQuery(ProfileSync.BY_CODE_AND_HASH, ProfileSync.class).setParameter("passed", objx.getCode()).setParameter("passed2", objx.getCodeLink()).setParameter("passed3", rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
                 //System.out.println(" ProfileSync query = " + query);
@@ -306,6 +310,27 @@ public class ProfileSyncHelper {
                resp  = em.merge(psync);
               
             }
+            else
+            {
+                ProfileSync newsync  = new ProfileSync();
+               LOGGER.info(" ##--FRESH doForceSyncProfileInfo ->>- "+rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), obj));
+               newsync.setVHash1(rh.doVhash1(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), obj));
+               newsync.setVHash(rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), obj));
+               LOGGER.info(" doForceSyncProfileInfo -- psync.getVHash2() "+newsync.getVHash2() );
+               if(newsync.getVHash2() == null || obj.getPin() ==null || "".equals(obj.getPin()))
+               {
+                    newsync.setVHash2("NA");//rh.doForcePIN(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), obj));
+               }
+               newsync.setMsisdn(obj.getMsisdn());
+               newsync.setCode(obj.getCode());
+               newsync.setCodeLink(obj.getCodeLink());
+               newsync.setPid(obj.getPid());
+               newsync.setControlCode(obj.getControlCode());
+               newsync.setSyncDate(new Date());
+               newsync.setPxChangeDate(new Date());
+               newsync.setModifiedDate(new Date());
+               resp  = em.merge(newsync);
+            }
             
          } catch (Exception e) {
         
@@ -377,6 +402,37 @@ public class ProfileSyncHelper {
                obj.setCodeLink(objx.getCodeLink());
                obj.setVHash1(rh.doVhash1(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
                obj.setVHash(rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
+               obj.setVHash2(rh.doVerifyPIN(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
+             
+               obj  = em.merge(obj);
+           
+            
+        } catch (Exception e) {
+        
+            e.printStackTrace();
+        
+        }
+       
+       return obj;
+    }
+    
+    @Transactional
+    public ProfileSync doLogTXP(ProfileSyncOBJ  objx) 
+    {
+        ProfileSync obj = new ProfileSync();
+        
+        try 
+        {
+            
+               obj.setPid(objx.getPid());
+               obj.setUserCode(objx.getUserCode());
+               obj.setMsisdn(objx.getMsisdn());
+               obj.setCode(objx.getCode());
+               obj.setControlCode(objx.getControlCode());
+               obj.setSyncDate(new Date());
+               obj.setCodeLink(objx.getCodeLink());
+               obj.setVHash1(rh.doVhash1(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
+               obj.setVHash("NA");// obj.setVHash(rh.doVerifyPassword(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
                obj.setVHash2(rh.doVerifyPIN(sysDataHelper.getProps("SYS_KEY", "~"), sysDataHelper.getProps("SYS_IV", "~"), objx));
              
                obj  = em.merge(obj);
@@ -713,6 +769,7 @@ public class ProfileSyncHelper {
             
             if(doLoadByFullCode(fromJson.getCode(),fromJson.getCodeLink()) == null)
             {
+               
 
                     ProfileSync doSync = doLog(fromJson);
 
@@ -736,7 +793,77 @@ public class ProfileSyncHelper {
         }
         catch (Exception e) {
         
+            LOGGER.error("  --doLogWTP  Exception -- ", e);
+            return Response.status(ErrorCodes.SYSTEM_ERROR).entity(job.add("responseDesc", rh.toDefault(e.getMessage(), "NA")).build()).build();
+        
+        }
+      
+    }
+    
+    public Response doLogTXP(@Valid  final JsonObject json) {
+        
+        String resp = "";
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        try 
+        {
+        
+            ProfileSyncOBJ fromJson = JsonbBuilder.create().fromJson(json.toString(), ProfileSyncOBJ.class);
+        
+            if(fromJson ==null)
+            {
+                 return Response.status(ErrorCodes.FORMAT_ERROR).build();
+            }
             
+           
+            if(fromJson !=null  && rh.isNullorEmpty(fromJson.getCode()))
+            {
+                return Response.status(ErrorCodes.INVALID_USER_CODE).build();
+            }
+            if(fromJson !=null  && rh.isNullorEmpty(fromJson.getCodeLink()))
+            {
+               return Response.status(ErrorCodes.INVALID_USER_CODELINK).build();
+            }
+           
+             
+            if(fromJson !=null  && rh.isNullorEmpty(fromJson.getPin()))
+            {
+                return Response.status(ErrorCodes.INVALID_PIN).build();
+            }
+            
+            if(fromJson !=null  && !fromJson.getPin().equals(fromJson.getVerifyPin()))
+            {
+               return Response.status(ErrorCodes.INVALID_VERIFY_PIN).build();
+               
+            }
+            
+            
+            if(doLoadByFullCode(fromJson.getCode(),fromJson.getCodeLink()) == null)
+            {
+               
+
+                    ProfileSync doSync = doLogTXP(fromJson);
+
+                    if(doSync != null)
+                    {
+                         return Response.status(ErrorCodes.ACCEPTED).entity(job.add("responseDesc", "SUCCESSFUL").build()).build();
+
+                    }
+                    else
+                    {
+                          return Response.status(ErrorCodes.DATABASE_ERROR).entity(job.add("responseDesc", "DATABASE ERROR").build()).build();
+
+                    }
+            }
+            else
+            {
+                 return Response.status(ErrorCodes.DUPLICATE_TRANSACTION).entity(job.add("responseDesc", "DUPLICATE TRANSACTION").build()).build();
+            }
+
+            
+        }
+        catch (Exception e) {
+        
+            LOGGER.error("  --doLogWTP  Exception -- ", e);
             return Response.status(ErrorCodes.SYSTEM_ERROR).entity(job.add("responseDesc", rh.toDefault(e.getMessage(), "NA")).build()).build();
         
         }
@@ -745,7 +872,7 @@ public class ProfileSyncHelper {
     
     
     public Response doForceSync(@Valid  final JsonObject json) {
-        
+        System.out.println("doForceSync json = " +  json);
         String resp = "";
         JsonObjectBuilder job = Json.createObjectBuilder();
         try 
@@ -787,7 +914,7 @@ public class ProfileSyncHelper {
             }
             else
             {
-                return Response.status(ErrorCodes.INVALID_USER_CODELINK).entity(job.add("responseDesc", ErrorCodes.doErroDesc(ErrorCodes.INVALID_USER_CODELINK)).build()).build();
+                return Response.status(ErrorCodes.SYSTEM_ERROR).entity(job.add("responseDesc", ErrorCodes.doErroDesc(ErrorCodes.SYSTEM_ERROR)).build()).build();
 
             }
             
@@ -979,7 +1106,7 @@ public class ProfileSyncHelper {
             }
            
             ProfileSync doSync = doVerify(fromJson);
-            LOGGER.info(" @- doVerify  --@ "+doSync);
+            LOGGER.info(" -@- doVerify  --@- "+doSync);
             if(doSync != null)
             {
               

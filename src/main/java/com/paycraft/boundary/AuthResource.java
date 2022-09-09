@@ -18,10 +18,10 @@ import javax.ws.rs.core.Response;
 import org.eclipse.microprofile.metrics.annotation.Metered;
 import org.eclipse.microprofile.metrics.annotation.Timed;
 
-@Path("/processor")
+@Path("/paycraftsystems/auth-service/api/processor")
 public class AuthResource {
     
-    
+   //curl -i XPOST  -d'{ux:"api-user@fsi.com.ng"}' http://127.0.0.1:8080/paycraftsystems/auth-service/api/processor/reset
 
     @Inject
     AuthController authController;
@@ -36,6 +36,15 @@ public class AuthResource {
     @Path("ping")
     @Produces(MediaType.TEXT_PLAIN)
     public Response doPing() {
+        System.out.println("called ping ");
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        job.add("responseDesc", "I am alive and well (Authentication Service..)");
+        return Response.ok(job.build(), MediaType.APPLICATION_JSON).build();
+    }
+    
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public Response doPingx() {
 
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add("responseDesc", "I am alive and well (Authentication Service)");
@@ -50,6 +59,14 @@ public class AuthResource {
         return authController.doLogin(request); //Response.fromResponse(authController.doLogin(request)).build();
     }
     
+    
+    @POST
+    @Path("verify-user")
+    public Response doVerifyUser(@Valid final JsonObject verifyStr) {
+
+        return profileSyncHelper.doVerify(verifyStr);
+       
+    }
     
     @POST
     @Path("user-login")
@@ -107,6 +124,7 @@ public class AuthResource {
     @Path("reset")
     @Metered(name = "reset_metered")
     public Response doReset(@Valid final JsonObject request) {
+        System.out.println("doReset request = " +  request);
         return authController.doReset(request);
     }
     
@@ -143,6 +161,13 @@ public class AuthResource {
     public Response doProfileSyncWTP(final JsonObject request) {
       
         return profileSyncHelper.doLogWTP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
+     @POST
+    @Path("sync-profile-txp")
+    public Response doProfileSyncTXP(final JsonObject request) {
+      
+        return profileSyncHelper.doLogTXP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
     }
    
     @POST
@@ -201,14 +226,6 @@ public class AuthResource {
         return profileSyncHelper.doVerifyTxp(verifyStr);
     }
     
-    @POST
-    @Path("verify-user")
-    public Response doVerifyUser(@Valid final JsonObject verifyStr) {
-
-        return profileSyncHelper.doVerify(verifyStr);
-       
-    }
-    
     
     @POST
     @Path("create-client")
@@ -257,5 +274,23 @@ public class AuthResource {
 
         return authController.doListTrimedClients();
     }
+    
+    @POST
+    @Path("list-clients/{partnerCode}")
+    public Response doListClients(@PathParam("partnerCode") String partnerCode) {
+
+        return authController.doListTrimedClients();
+    }
+    
+    @POST
+    @Path("list-clients-by-customer/{partnerCode}")
+    public Response doListClientsByCustomerCode(@PathParam("partnerCode") String partnerCode) {
+
+        return authController.doLookupClientByCustomerCode(partnerCode);
+    }
+    
+    
+    
+    
 
 }

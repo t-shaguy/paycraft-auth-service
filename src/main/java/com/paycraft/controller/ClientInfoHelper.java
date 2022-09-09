@@ -17,6 +17,9 @@ import java.util.Date;
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
@@ -42,6 +45,9 @@ public class ClientInfoHelper {
     
     @Inject
     SysDataHelper sysDataHelper;
+    
+    @Inject
+    ESEQRepository eSEQRepository;
     
     ResourceHelper rh = new ResourceHelper();
     
@@ -169,6 +175,22 @@ public class ClientInfoHelper {
      return resultList;
     }
     
+    public List<ClientsInfo> doListAllClients(String partnerCode) {
+        List<ClientsInfo> resultList =  new ArrayList<>();
+        try 
+        {
+                resultList = em.createNamedQuery(ClientsInfo.BY_PARTNER_CODE, ClientsInfo.class).setParameter("passed", partnerCode).getResultList();
+               
+        
+        } catch (Exception e) {
+        
+             e.printStackTrace();
+             
+              return null;
+        }
+     return resultList;
+    }
+    
     
    
     public ClientsInfo getByName(String userid, String code) {
@@ -177,7 +199,7 @@ public class ClientInfoHelper {
         {
                if(userid == null ) userid ="";
                if(code == null ) code ="";
-               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_AND_CODE, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
+               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_AND_PARTNER_CODE, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
                 //System.out.println(" getByName query = " + query);
                 List<ClientsInfo> resultList = query.getResultList();
                 if(resultList != null && resultList.size() > 0)
@@ -234,7 +256,7 @@ public class ClientInfoHelper {
         {
                if(userid == null ) userid ="";
                if(code == null ) code ="";
-               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_OR_PARTNER_ID, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
+               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CLIENT_NAME_AND_PARTNER_CODE, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", code.trim());
                 //System.out.println(" getByName query = " + query);
                 List<ClientsInfo> resultList = query.getResultList();
                 if(resultList != null && resultList.size() > 0)
@@ -340,12 +362,17 @@ public class ClientInfoHelper {
     @Transactional
     public ClientsInfo doSync(ClientsInfo  obj) throws ServiceException, Exception
     {
+        LOGGER.info("doSync obj --  "+obj);
         ClientsInfo resp = null;
           
-            ClientsInfo trxLog = getByName(obj.getClientName(), obj.getCode());
+        try 
+        {
+            
+          ClientsInfo trxLog = getByName(obj.getClientName(), obj.getPartnerCode());
+            LOGGER.info("trxLog = " + trxLog);
             if(trxLog !=null)
             {
-                
+              
                trxLog.setIpAddress(obj.getIpAddress());
                trxLog.setCode(obj.getCode());
                trxLog.setEnforceIp(obj.getEnforceIp());
@@ -360,6 +387,7 @@ public class ClientInfoHelper {
                trxLog.setStatus(obj.getStatus());
                trxLog.setPartnerCode(obj.getPartnerCode());
                trxLog.setStatusStr(rh.doStatusDesc(trxLog.getStatus().intValue()));
+               trxLog.setClientCategory(obj.getClientCategory());
                resp  = em.merge(trxLog);
                
             }
@@ -369,6 +397,14 @@ public class ClientInfoHelper {
              {
                   throw new ServiceException(ErrorCodes.INVALID_CLIENT,"Invalid or Unknown Client");
              }
+          } catch (Exception e) {
+        
+              e.printStackTrace();
+              
+              LOGGER.error(" Exception @ ClientsInfo doSync ",e);
+          
+          }
+         
              
        return resp;
     }
@@ -377,26 +413,29 @@ public class ClientInfoHelper {
     @Transactional
     public Response doLog(ClientsInfoObj  obj) throws ServiceException, Exception
     {
+        System.out.println(" ClientsInfoObj obj = " +   obj);
         ClientsInfo resp = null;
           
         
         try 
         {
             
-       
-            ClientsInfo trxLog = getByCredzOr(obj.getClientName(), obj.getPartnerID());
+           
+            ClientsInfo trxLog = getByCredzOr(obj.clientName, obj.partnerCode);
+            System.out.println("trxLog = " + trxLog+" obj.partnerCode "+obj.partnerCode+" obj.clientName "+obj.clientName);
             if(trxLog ==null)
             {
                
                ClientsInfo  newobj = new ClientsInfo();
-               newobj.setIpAddress((obj.getIpAddress()==null || obj.getIpAddress().trim().equals(""))?"127.0.0.1":obj.getIpAddress());
-               newobj.setCode(obj.getCode());
-               newobj.setEnforceIp(obj.getEnforceIp());
-               newobj.setClientName(obj.getClientName());
+               newobj.setIpAddress((obj.ipAddress==null || obj.ipAddress.trim().equals(""))?"127.0.0.1":obj.ipAddress);
+               newobj.setCode(obj.code);
+               newobj.setPartnerCode(obj.partnerCode);
+               newobj.setEnforceIp(obj.enforceIp);
+               newobj.setClientName(obj.clientName);
                newobj.setStatus(BigInteger.valueOf(3));
-               if(obj.getTokenExpiryDays()> 0)
+               if(obj.tokenLifespanDays > 0)
                {
-                  newobj.setTokenLifespanDays(obj.getTokenExpiryDays());
+                  newobj.setTokenLifespanDays(obj.tokenLifespanDays);
                }
                else
                {
@@ -404,10 +443,10 @@ public class ClientInfoHelper {
                }
                newobj.setCKey("NA");
                newobj.setIv("NA");
-               newobj.setPartnerCode(obj.getCode());
-               newobj.setPartnerID(obj.getPartnerID());
-               newobj.setEnforceIp(obj.getEnforceIp());
-               newobj.setClientCategory(obj.getClientCategory());
+               //newobj.setPartnerCode(eSEQRepository.genCode("CLIENT-CODE", 12));//obj.code);
+               newobj.setPartnerID(obj.partnerID);
+               newobj.setEnforceIp(obj.enforceIp);
+               newobj.setClientCategory(obj.clientCategory);
                //trxLog.setUpBy(obj.getUpBy());
                //newobj.setStatus(obj.getStatus());
                
@@ -426,6 +465,7 @@ public class ClientInfoHelper {
             }
             else
             {
+                System.out.println("trxLog = " + trxLog);
                 //user already exists
                 return Response.status(ErrorCodes.USER_ALREADY_EXIST).build(); // ErrorCodes.DUPLICATE_TRANSACTION
             }
@@ -434,7 +474,7 @@ public class ClientInfoHelper {
         } catch (Exception e) {
         
          
-             LOGGER.error(" Exception doLog  ",e);
+             LOGGER.error(" Exception ClientsInfohelper doLog  ",e);
             
              return Response.status(ErrorCodes.SYSTEM_ERROR).build();
         }
@@ -451,18 +491,18 @@ public class ClientInfoHelper {
         try 
         {
             
-            if(obj !=null && obj.getTid() > 0)
+            if(obj !=null && obj.tid > 0)
             {
-                trxLog = doFind(obj.getTid());
+                trxLog = doFind(obj.tid);
             }
-            else
-            {
-                trxLog =  getByName(obj.getClientName());
-            }
+           
             
+            LOGGER.info(" doSyncClient - trxLog obj.tokenLifespanDays -("+obj.tokenLifespanDays+")-trxLog "+trxLog);
             if(trxLog != null)
             {
-                ClientsInfo byName = getByName(obj.getClientName());
+                 
+               /*
+                ClientsInfo byName = getByName(obj.clientName, obj.partnerCode);
                 
                 if(byName !=null && byName.getTid() != trxLog.getTid())
                 {
@@ -470,13 +510,15 @@ public class ClientInfoHelper {
                 }
                 else
                 {
+                  
                     
-                        trxLog.setClientName(obj.getClientName());
-                        trxLog.setIpAddress(obj.getIpAddress());
-                        trxLog.setCode(obj.getCode());
-                        trxLog.setTokenLifespanDays(trxLog.getTokenLifespanDays());
+                */
+                       // trxLog.setClientName(obj.clientName);
+                        trxLog.setIpAddress(obj.ipAddress);
+                        //trxLog.setCode(obj.code);
+                        trxLog.setTokenLifespanDays(obj.tokenLifespanDays); //.getTokenLifespanDays()
 
-                        trxLog.setEnforceIp(obj.getEnforceIp());
+                        trxLog.setEnforceIp(obj.enforceIp);
                        // trxLog.setCKey("NA");
                        // trxLog.setIv("NA");
                         //trxLog.setUpBy(obj.getUpBy());
@@ -493,7 +535,7 @@ public class ClientInfoHelper {
                         {
                              return Response.ok().entity(resp.toJson()).build();
                         }
-                }
+               // }
                 
                 
             }
@@ -555,7 +597,7 @@ public class ClientInfoHelper {
         
         try 
         {
-            ClientsInfo trxLog = doFind(obj.getTid());
+            ClientsInfo trxLog = doFind(obj.tid);
             
             if(trxLog != null)
             {
@@ -602,15 +644,15 @@ public class ClientInfoHelper {
         {
             
        
-            ClientsInfo trxLog = getByName(obj.getClientName(), obj.getCode());
+            ClientsInfo trxLog = getByName(obj.clientName, obj.code);
             if(trxLog !=null)
             {
                 
-               trxLog.setIpAddress(obj.getIpAddress());
-               trxLog.setCode(obj.getCode());
+               trxLog.setIpAddress(obj.ipAddress);
+               trxLog.setCode(obj.code);
                trxLog.setTokenLifespanDays(trxLog.getTokenLifespanDays());
                
-               trxLog.setEnforceIp(obj.getEnforceIp());
+               trxLog.setEnforceIp(obj.enforceIp);
                trxLog.setCKey("NA");
                trxLog.setIv("NA");
                //trxLog.setUpBy(obj.getUpBy());
@@ -656,6 +698,37 @@ public class ClientInfoHelper {
            
        
        return resp;
+    }
+    
+     public JsonArray doLoadByParnerCode(String code) {
+        ClientsInfo obj =  null;
+        JsonArrayBuilder jar = Json.createArrayBuilder();
+        try 
+        {
+               LOGGER.info("ClientsInfo = " + code);
+               TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_PARTNER_CODE, ClientsInfo.class).setParameter("passed", code);
+                //System.out.println(" doLoadByCode query = " + query);
+                List<ClientsInfo> resultList = query.getResultList();
+                if(resultList != null && resultList.size() > 0)
+                {
+                    resultList.stream().forEach(a->jar.add(a.toJson()));
+                     return jar.build();
+                }
+                else
+                {
+                    return Json.createArrayBuilder().build();// Response.status(ErrorCodes.UNKNOWN_DOC).build();
+                }
+       
+        
+        } catch (Exception e) {
+        
+             e.printStackTrace();
+             
+              LOGGER.error("Exception @ ClientsInfo = ", e);
+             
+              return null;
+        }
+      
     }
     
     
