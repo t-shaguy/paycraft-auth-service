@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.eclipse.microprofile.metrics.annotation.Metered;
 import org.eclipse.microprofile.metrics.annotation.Timed;
-
+//3gp-paycraftsystems/auth-service/api/processor
 @Path("/paycraftsystems/auth-service/api/processor")
 public class AuthResource {
     
@@ -65,6 +65,14 @@ public class AuthResource {
     public Response doVerifyUser(@Valid final JsonObject verifyStr) {
 
         return profileSyncHelper.doVerify(verifyStr);
+       
+    }
+    
+    @POST
+    @Path("verify-user-client")
+    public Response doVerifyUserByClient(@Valid final JsonObject verifyStr) {
+
+        return profileSyncHelper.doVerifyByClient(verifyStr);
        
     }
     
@@ -128,6 +136,8 @@ public class AuthResource {
         return authController.doReset(request);
     }
     
+    
+    
     @POST
     @Path("reset-own")
     @Metered(name = "reset_metered")
@@ -163,7 +173,7 @@ public class AuthResource {
         return profileSyncHelper.doLogWTP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
     }
     
-     @POST
+    @POST
     @Path("sync-profile-txp")
     public Response doProfileSyncTXP(final JsonObject request) {
       
@@ -178,11 +188,34 @@ public class AuthResource {
     }
     
     @POST
+    @Path("force-sync-client")
+    public Response doForceSyncCLient(final JsonObject request) {
+      
+        return profileSyncHelper.doForceSyncByClient(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
+    @POST
     @Path("force-sync-txp")
     public Response doForceSyncTXP(final JsonObject request) {
       
         return profileSyncHelper.doForceSyncTxP(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
     }
+    
+    
+    @POST
+    @Path("force-sync-txp-v2")
+    public Response doForceSyncV2TXP(final JsonObject request) {
+      
+        return profileSyncHelper.doForceSyncTxPV2(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
+    @POST
+    @Path("clear-profile")
+    public Response doClearProfile(final JsonObject request) {
+      
+        return profileSyncHelper.doClearProfile(request); // return Response.fromResponse(profileSyncHelper.doLog(request)).build();
+    }
+    
     
     @POST
     @Path("sync-txp")

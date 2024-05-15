@@ -19,15 +19,17 @@ public class LoginObj {
     public long providerId;
     public String providerStr;
     public String customerCode;
+    public String flwSecKey;
+    public String flwPubKey;
+    public String flwEncKey;
+    public String apiUserCustomerName;
 
     @Override
     public String toString() {
-        return "LoginObj{" + "ux=" + ux + ", iv=" + iv + ", key=" + key + ", clientCategory=" + clientCategory + ", providerId=" + providerId + ", providerStr=" + providerStr + ", customerCode=" + customerCode + '}';
+        return "LoginObj{" + "ux=" + ux + ", iv=" + iv + ", key=" + key + ", clientCategory=" + clientCategory + ", providerId=" + providerId + ", providerStr=" + providerStr + ", customerCode=" + customerCode + ", flwSecKey=" + flwSecKey + ", flwPubKey=" + flwPubKey + ", flwEncKey=" + flwEncKey + ", apiUserCustomerName=" + apiUserCustomerName + '}';
     }
-    
-    
 
-    
    
     
+
 }

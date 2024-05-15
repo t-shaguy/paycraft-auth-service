@@ -11,6 +11,7 @@ import com.paycraft.entities.ClientsInfo;
 import com.paycraft.resources.RandomCharacter;
 import com.paycraft.resources.ResourceHelper;
 import com.paycraftsystems.error.messages.ErrorCodes;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.logging.Logger;
@@ -23,6 +24,7 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.bind.JsonbBuilder;
 import javax.validation.Valid;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import javax.ws.rs.core.MediaType;
@@ -89,7 +91,7 @@ public class AuthController {
             
             doLoginObj = JsonbBuilder.create().fromJson(jsonRequest.toString(), LoginObj.class);
             
-            LOGGER.info("doResend parseRequest = " + doLoginObj);
+            LOGGER.info("# doResend parseRequest = " + doLoginObj);
             
             activityby = doLoginObj.ux;
             
@@ -118,23 +120,28 @@ public class AuthController {
              {
                  jsonObject = Json.createObjectBuilder().add("responseDesc", responseDesc).add("iv", ivee).add("key", key).build();
              
-                 return Response.status(ErrorCodes.SYSTEM_ERROR).entity(jsonObject).build();
+                 return Response.status(ErrorCodes.INVALID_CLIENT).entity(jsonObject).build();
+               
                  
              }
              
-        }/*
-        catch (ServiceException e) 
+        }
+        catch (WebApplicationException e) 
         {
             
             jsonObject = Json.createObjectBuilder().add("responseDesc", "System errror "+e.getMessage()).add("px", "").add("rx", "").build();
-            e.printStackTrace();
+           // e.printStackTrace();
             
-            return Response.status(e.getCode()).entity(jsonObject).build();
+            LOGGER.error("WebApplicationException & doResend ", e);
+            
+            return Response.status(e.getResponse().getStatus()).entity(jsonObject).build();
                     
-        }*/
+        }
         catch (Exception e) 
         {
              e.printStackTrace();
+             
+             LOGGER.error("Exception & doResend ", e);
             
             jsonObject = Json.createObjectBuilder().add("responseDesc", "System errror "+e.getMessage()).add("iv", "").add("key", "").build();
            
@@ -272,7 +279,7 @@ public class AuthController {
                    {
                        // 190 800 2488  0702 065 7345
                        // gt collections / subscription // smile
-                       jsonObject = Json.createObjectBuilder().add("responseDesc", "Reset Successful, Please use new keys going forward (pass iv as the IV and key as the Key in AES encryption ) ").add("iv", ivee).add("key", key).build();
+                       jsonObject = Json.createObjectBuilder().add("responseDesc", "Reset Successful, Please use new keys going forward (pass iv as the IV and key as the Key in AES encryption ) ").add("iv", ivee).add("key", key).add("maxage",byUniqueID.getTokenLifespanDays()).build();
            
                        activityInfo = "Successful Keys reset by "+doSync.getCode();
                        /*
@@ -291,7 +298,7 @@ public class AuthController {
                        //instantNotifications.submit(new CallableMailerService(sysPropsController,  emailSender,  notificationFacade,  notifLog ,  "0"));
                        */
                        System.out.println("doSync = iv " + ivee+" key : "+key);
-                      return Response.accepted().entity(jsonObject).type(MediaType.APPLICATION_JSON).header("iv", key).header("key", ivee).build();
+                      return Response.accepted().entity(jsonObject).type(MediaType.APPLICATION_JSON).header("iv", key).header("key", ivee).header("maxage", doSync.getTokenLifespanDays()).build();
                    }
              }
              else
@@ -657,11 +664,11 @@ public class AuthController {
 
             doLoginObj = JsonbBuilder.create().fromJson(jsonRequest, LoginObj.class);
             
-            System.out.println("--> doLoginObj = " +  doLoginObj);
+            System.out.println("@@--> doLoginObj = " +  doLoginObj);
             
             ClientsInfo byCredentials = clientInfoHelper.getByCredentials(doLoginObj.ux, doLoginObj.iv, doLoginObj.key);
-          
-            //LOGGER.info(" ### byCredentials = " + byCredentials);
+            
+            LOGGER.info(" @@ ### byCredentials = " + byCredentials);
            
             if(byCredentials == null)
             {
@@ -670,12 +677,12 @@ public class AuthController {
             }
 
             String token = tokenHelper.issueToken(byCredentials,doLoginObj, uriInfo);
-           
+            
             LOGGER.info("@s-- doLogin token = " + token);
             
             if(token !=null)
             {
-                return Response.accepted(Json.createObjectBuilder().add(AUTHORIZATION, "Bearer " + token).build().toString()).header(AUTHORIZATION, "Bearer " + token).build();
+                return Response.accepted(Json.createObjectBuilder().add(AUTHORIZATION, "Bearer " + token).add("customerCode", rh.toDefault(doLoginObj.customerCode)).add("customerName", rh.toDefault(doLoginObj.apiUserCustomerName)).add("max-age", byCredentials.getTokenLifespanDays()).build().toString()).header(AUTHORIZATION, "Bearer " + token).build();
             
             
             }
@@ -719,7 +726,7 @@ public class AuthController {
             
             ClientsInfo byCredentials = clientInfoHelper.getByCredentials(doLoginObj.ux, doLoginObj.iv, doLoginObj.key);
           
-            //LOGGER.info(" ### byCredentials = " + byCredentials);
+            LOGGER.info(" ### doUserLogin byCredentials = " + byCredentials);
            
             if(byCredentials == null)
             {

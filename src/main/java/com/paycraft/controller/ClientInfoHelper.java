@@ -284,15 +284,11 @@ public class ClientInfoHelper {
         ClientsInfo obj =  null;
         try 
         {
-               /*
-                px = iv
-                rx = key
-               */
                if(userid == null ) userid ="";
                if(iv == null ) iv ="";
                if(key == null ) key ="";
                TypedQuery<ClientsInfo> query = em.createNamedQuery(ClientsInfo.BY_CREDZ, ClientsInfo.class).setParameter("passed", userid.trim()).setParameter("passed2", iv.trim()).setParameter("passed3",  key.trim());
-                //System.out.println(" doLoadByCode query = " + query);
+                System.out.println(" doLoadByCode query = " + query);
                 List<ClientsInfo> resultList = query.getResultList();
                 if(resultList != null && resultList.size() > 0)
                 {

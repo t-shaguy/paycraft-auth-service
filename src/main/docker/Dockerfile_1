@@ -1,0 +1,35 @@
+####
+# This Dockerfile is used in order to build a container that runs the Quarkus application in native (no JVM) mode
+#
+# Before building the docker image run:
+#
+# mvn package -Pnative -Dquarkus.native.container-build=true
+#
+# Then, build the image with:
+#
+# docker build -f src/main/docker/Dockerfile.native -t quarkus/paycraft-vaspay-auth .
+#
+# Then run the container using:
+#
+# docker run -i --rm -p 8080:8080 quarkus/paycraft-vaspay-auth
+#
+###
+FROM registry.access.redhat.com/ubi8/ubi-minimal
+WORKDIR /work/application
+COPY ./paycraft-auth-service-1.0-SNAPSHOT-runner.jar /work/application/paycraft-auth-service-1.0-SNAPSHOT-runner.jar
+RUN chmod u+x /work/application/*
+cmd chmod -R 777 /work/application \
+#RUN chmod -R "u+rwX" /work \
+#RUN chmod 775 /work
+EXPOSE 8888
+
+CMD ["java -jar /work/application/paycraft-auth-service-1.0-SNAPSHOT-runner.jar", "-Dquarkus.http.host=0.0.0.0"]
+
+
+#RUN useradd -G root --no-create-home --disabled-password 1001 \
+#  && chown -R 1001 /work/application \
+# && chmod -R "g+rwX" /work/application \
+#  && chown -R 1001:root /work/application
+# USER 1001
+
+#ENTRYPOINT [ "/deployments/run-java.sh" ]

@@ -324,3 +324,4 @@ Caused by: java.sql.SQLSyntaxErrorException: Table 'fs_mobileinterfac_e.sys_data
 	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.extract(ResultSetReturnImpl.java:57)
 	... 89 more
 
+07:34:04 INFO  [io.quarkus] (main) fs-mobile-interface stopped in 0.093s

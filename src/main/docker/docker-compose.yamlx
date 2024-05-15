@@ -1,0 +1,44 @@
+services:
+  backend:
+    image: paycraft/paycraft-auth
+    platform: linux/amd64
+    ports:
+      - "8888:8888"
+    networks:
+      - collabo
+
+networks:
+  collabo:
+    name: paycraft-network
+    
+    
+    # linux/arm64/v8
+    
+    
+version: '3'
+ 
+services:
+   db:
+     image: mysql:8.0.23
+     volumes:
+       - db_data:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: Taysay03#
+       MYSQL_DATABASE: paycraft_auth
+       MYSQL_USER: root
+       MYSQL_PASSWORD: Taysay03#
+ 
+  paycraft-auth:
+     depends_on:
+       - db
+     image: wordpress:latest
+     ports:
+       - "8888:8888"
+     restart: always
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_USER: wordpress_user
+       WORDPRESS_DB_PASSWORD: wordpress_password
+volumes:
+    db_data:

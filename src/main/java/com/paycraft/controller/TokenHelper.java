@@ -107,8 +107,8 @@ public class TokenHelper
              
                System.out.println("issueToken sub checkes "+doLoginObj+" =to pass # " + ClientsInfo.toJson(cinfo, doLoginObj));
                System.out.println("TOKEN NEXT XPRIRARTION = " + LocalDateTime.now().plusDays(cinfo.getTokenLifespanDays()));
+               System.out.println(" = +++++++++B4 Credz  = " + ClientsInfo.toJson(cinfo, doLoginObj) );
                jwtToken = Jwts.builder()
-                   
                 .setSubject(new AESCrypter(sysPropsController.getProps("SYS_KEY"),sysPropsController.getProps("SYS_IV")).encrypt(ClientsInfo.toJson(cinfo, doLoginObj))) 
                 .setIssuer("")//uriInfo.getAbsolutePath().toString())
                 .setIssuedAt(new Date())
@@ -183,6 +183,35 @@ public class TokenHelper
              Key key = keyGenerator.generateKey(sysPropsController.getProps("SYS_IV"), sysPropsController.getProps("SYS_KEY"));
              jwtToken = Jwts.builder()
                 .setSubject(new AESCrypter(sysPropsController.getProps("SYS_KEY"),sysPropsController.getProps("SYS_IV")).encrypt(profile.toJson().toString())) 
+                .setIssuer("")//uriInfo.getAbsolutePath().toString())
+                .setIssuedAt(new Date())
+                .setExpiration(toDate(LocalDateTime.now().plusDays(1))) //.plusMinutes(15L)
+                .signWith(SignatureAlgorithm.HS512, key)
+                .compact();
+        LOGGER.info("-->#### generating token for a key : " + jwtToken + " - " + key);
+            
+        } catch (Exception e) {
+       
+            //e.printStackTrace();
+            
+            LOGGER.info(" --  ############ Exception issueToken = ",e);
+        
+        
+        }
+       
+        return jwtToken;
+
+    }
+    
+    public String issueToken(ProfileSync profile,String principal, String principalControl, UriInfo uriInfo) throws ServiceException, SecException 
+    {
+        LOGGER.info(" $$ @@@ ############ uriInfo = " + profile);
+         String jwtToken =  null;
+        try 
+        {
+             Key key = keyGenerator.generateKey(sysPropsController.getProps("SYS_IV"), sysPropsController.getProps("SYS_KEY"));
+             jwtToken = Jwts.builder()
+                .setSubject(new AESCrypter(sysPropsController.getProps("SYS_KEY"),sysPropsController.getProps("SYS_IV")).encrypt(profile.toJson(principal, principalControl).toString()))
                 .setIssuer("")//uriInfo.getAbsolutePath().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(toDate(LocalDateTime.now().plusDays(1))) //.plusMinutes(15L)

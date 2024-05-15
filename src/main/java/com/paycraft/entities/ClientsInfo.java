@@ -92,7 +92,7 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
     @Column(name = "UP_BY")
     private long upBy;
     @Basic(optional = false)
-    @Column(name = "token_lifespan_days")
+    @Column(name = "token_lifespan_days") 
     private int tokenLifespanDays;
     @Basic(optional = false)
     @Column(name = "partner_ID")
@@ -284,7 +284,7 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
                 .add("iv", toDefault(obj.getIv()))
                 .add("key", toDefault(obj.getCKey()))
                 .add("code", toDefault(obj.getCode()))
-                .add("categoryDesc", doCategoryDescription(obj.clientCategory))
+                .add("categoryDesc", doCategoryDescription(obj.clientCategory==null?0:obj.clientCategory))
                 .add("clientCategory", obj.clientCategory==null?0:obj.clientCategory)
                 .add("partnerCode", toDefault(obj.partnerCode))
                 .add("customerCode", toDefault(doLoginObj.customerCode))
@@ -292,7 +292,10 @@ public class ClientsInfo extends ResourceHelper implements Serializable {
                 .add("providerId", doLoginObj.providerId)
                 .add("providerStr", toDefault(doLoginObj.providerStr))
                 .add("partnerId", toDefault(obj.partnerID))
-                
+                .add("apiUserCustomerName", toDefault(doLoginObj.apiUserCustomerName))
+                .add("flwSecKey", toDefault(doLoginObj.flwSecKey))
+                .add("flwPubKey", toDefault(doLoginObj.flwPubKey))
+                .add("flwEncKey", toDefault(doLoginObj.flwEncKey))
                 
        .build().toString();
        

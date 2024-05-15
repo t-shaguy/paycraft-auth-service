@@ -7,11 +7,11 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/paycraft-vaspay-auth-jvm .
+# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/paycraft-auth .
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/paycraft-vaspay-auth-jvm
+# docker run -i --rm -p 8888:8888 quarkus/paycraft-auth-jvm
 #
 ###
 FROM fabric8/java-alpine-openjdk11-jre
@@ -19,7 +19,19 @@ ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jb
 ENV AB_ENABLED=jmx_exporter
 COPY target/* /deployments/lib/
 COPY target/*-runner.jar /deployments/app.jar
-EXPOSE 8080
+EXPOSE 8888
+
+#RUN groupadd sshgroup && useradd -ms /bin/bash -g sshgroup sshuser
+# Create sshuser directory in home
+#RUN mkdir -p /home/sshuser/.ssh
+# Copy the ssh public key in the authorized_keys file. The idkey.pub below is a public key file you get from ssh-keygen. They are under ~/.ssh directory by default.
+#COPY idkey.pub /home/sshuser/.ssh/authorized_keys
+# change ownership of the key file. 
+#RUN chown sshuser:sshgroup /home/sshuser/.ssh/authorized_keys && chmod 600 /home/sshuser/.ssh/authorized_keys
+# Start SSH service
+#RUN service ssh start
+# Expose docker port 22
+#EXPOSE 22
 
 # run with user 1001 and be prepared for be running in OpenShift too
 RUN adduser -G root --no-create-home --disabled-password 1001 \

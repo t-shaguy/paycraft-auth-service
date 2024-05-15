@@ -39,10 +39,18 @@ import org.slf4j.LoggerFactory;
 @Table(name = "profile_sync")
 @NamedQueries({
     @NamedQuery(name = ProfileSync.ALL, query = "SELECT p FROM ProfileSync p"),
-    @NamedQuery(name =  ProfileSync.BY_CODE, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2"),
-    @NamedQuery(name =  ProfileSync.BY_CODE_AND_HASH, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.vHash = :passed3"),
+    @NamedQuery(name =  ProfileSync.BY_CODE, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.channel = :passed3"),
+    @NamedQuery(name =  ProfileSync.BY_CODE_AND_CHANNEL, query = "SELECT p FROM ProfileSync p WHERE p.codeLink = :passed and p.channel = :passed2"),
+    @NamedQuery(name =  ProfileSync.BY_PID_AND_CHANNEL_AND_CLIENT, query = "SELECT p FROM ProfileSync p WHERE p.pid = :passed and p.channel = :passed2 and p.clientId = :passed3 "),
+    @NamedQuery(name =  ProfileSync.BY_PID_AND_CHANNEL, query = "SELECT p FROM ProfileSync p WHERE p.pid = :passed and p.channel = :passed2"),
+    
+    @NamedQuery(name =  ProfileSync.BY_PID_AND_HASH, query = "SELECT p FROM ProfileSync p WHERE p.pid = :passed and p.codeLink = :passed2 and p.vHash = :passed3 and p.channel = :passed4"),
+    
+    //@NamedQuery(name =  ProfileSync.BY_CODE_AND_CHANNEL, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.channel = :passed3"),
+    @NamedQuery(name =  ProfileSync.BY_CODE_AND_HASH, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.vHash = :passed3 and p.channel = :passed4"),
     @NamedQuery(name =  ProfileSync.BY_CODE_AND_HASH2, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.codeLink = :passed2 and p.vHash2 = :passed3"),
     @NamedQuery(name =  ProfileSync.BY_CODE_AND_TXP_HASH2, query = "SELECT p FROM ProfileSync p WHERE p.code = :passed and p.vHash2 = :passed2"),
+    @NamedQuery(name =  ProfileSync.BY_PID_AND_TXP_HASH2, query = "SELECT p FROM ProfileSync p WHERE p.pid = :passed and p.vHash2 = :passed2"),
     @NamedQuery(name =  ProfileSync.BY_CODE_OR_MSISDN_AND_TXP_HASH2, query = "SELECT p FROM ProfileSync p WHERE (p.code = :passed or p.msisdn = :passed)   and p.vHash2 = :passed2"),
 })
 public class ProfileSync implements Serializable {
@@ -51,9 +59,14 @@ public class ProfileSync implements Serializable {
     
     public static final String ALL = "ProfileSync.findAll";
     public static final String BY_CODE = "ProfileSync.findByCodeNLink";
+    public static final String BY_PID_AND_CHANNEL = "ProfileSync.findByPidAndChannel";
+    public static final String BY_PID_AND_CHANNEL_AND_CLIENT = "ProfileSync.findByPidAndChannelAndClient";
+    public static final String BY_CODE_AND_CHANNEL = "ProfileSync.findByCodeAndChannel";
     public static final String BY_CODE_AND_HASH = "ProfileSync.findByCodeNHash";
+    public static final String BY_PID_AND_HASH = "ProfileSync.findByPidNHash";
     public static final String BY_CODE_AND_HASH2 = "ProfileSync.findByCodeNHash2";
     public static final String BY_CODE_AND_TXP_HASH2 = "ProfileSync.findByCodeNTxpHash2";
+    public static final String BY_PID_AND_TXP_HASH2 = "ProfileSync.findByPidNTxpHash2";
     public static final String BY_CODE_OR_MSISDN_AND_TXP_HASH2 = "ProfileSync.findByCodeOrMSISDNTxpHash2";
     
     private static final long serialVersionUID = 1L;
@@ -96,6 +109,11 @@ public class ProfileSync implements Serializable {
     @Column(name = "control_code")
     private String controlCode;
     
+    @Column(name = "channel")
+    private String channel;
+    
+    @Column(name = "client_id")
+    private String clientId;
     
     @Column(name = "class")
     private BigInteger class1;
@@ -259,9 +277,18 @@ public class ProfileSync implements Serializable {
     public void setPxChangeDate(Date pxChangeDate) {
         this.pxChangeDate = pxChangeDate;
     }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
     
     
-    public JsonObject toJson() {
+    
+    public JsonObject toJson(String principal, String principalCode) {
         ResourceHelper rh = new ResourceHelper();
         JsonObjectBuilder  job = Json.createObjectBuilder();
         try 
@@ -276,6 +303,41 @@ public class ProfileSync implements Serializable {
                  .add("vHash",rh.toDefault(this.vHash))
                  .add("syncDate",rh.toDefault(this.syncDate))
                  .add("controlCode",rh.toDefault(this.controlCode))
+                 .add("princialControlCode",rh.toDefault(principalCode))
+                 .add("channel",rh.toDefault(this.channel))
+                 .add("principal",rh.toDefault(principal))
+                 .add("lastLoginDate",rh.toDefault(getLastAccessDate()))
+                 .add("modifiedDate",rh.toDefault(this.modifiedDate));
+            
+        } catch (Exception e) {
+        
+           // e.printStackTrace();
+            
+            LOGGER.error(" --  Exception toJson() --", e);
+        
+        }
+        
+    return job.build();
+    }
+    
+    public JsonObject toJson() {
+        ResourceHelper rh = new ResourceHelper();
+        JsonObjectBuilder  job = Json.createObjectBuilder();
+        try 
+        {
+              job.add("tid",this.tid)
+                 .add("pid",this.pid)
+                 .add("code",rh.toDefault(this.code))
+                 .add("userCode",rh.toDefault(this.userCode))
+                 .add("msisdn",rh.toDefault(this.msisdn))
+                 .add("channel",rh.toDefault(this.channel))
+                 .add("codeLink",rh.toDefault(this.codeLink))
+                 .add("vHash1",rh.toDefault(this.vHash1))
+                 .add("vHash",rh.toDefault(this.vHash))
+                 .add("syncDate",rh.toDefault(this.syncDate))
+                 .add("controlCode",rh.toDefault(this.controlCode))
+                 //.add("princialControlCode",rh.toDefault(principalCode))
+                 //.add("principal",rh.toDefault(principal))
                  .add("lastLoginDate",rh.toDefault(getLastAccessDate()))
                  .add("modifiedDate",rh.toDefault(this.modifiedDate));
             
@@ -299,6 +361,7 @@ public class ProfileSync implements Serializable {
               job.add("tid",this.tid)
                  .add("pid",this.pid)
                  .add("code",rh.toDefault(this.code))
+                 .add("channel",rh.toDefault(this.channel))
                  .add("userCode",rh.toDefault(this.userCode))
                  .add("msisdn",rh.toDefault(this.msisdn))
                  .add("codeLink",rh.toDefault(this.codeLink))
@@ -319,6 +382,14 @@ public class ProfileSync implements Serializable {
         }
         
     return job.build();
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
     
 

@@ -13,6 +13,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.json.Json;
+import javax.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +72,8 @@ public class ResourceHelper {
      
      
     public String doVhash1(String key, String iv, ProfileSyncOBJ obj) throws SecException {
-        String tohash = obj.getCode()+""+obj.getCodeLink();
+        String tohash = obj.getCode()+""+obj.getCodeLink()+obj.getChannel();
+        System.out.println("---SETTING doVhash1 = tohash " + tohash); 
         return  doSHA512(new AESCrypter(key, iv).encrypt(tohash));
     }
     
@@ -81,23 +84,37 @@ public class ResourceHelper {
     
     
     public String doPassword(String key, String iv, ProfileSyncOBJ obj) throws SecException {
-        String tohash = obj.getCode()+obj.getCodeLink()+obj.getNewPassword();
+        String tohash = obj.getCode()+obj.getCodeLink()+obj.getNewPassword()+""+obj.getChannel();
+        System.out.println("---doPassword = tohash " + tohash);
+        return  new AESCrypter(key, iv).encrypt(tohash);
+    }
+   //           JsonObject authSync = Json.createObjectBuilder().add("code", rh.toDefault(doLookup.emailAddress)).add("codeLink", rh.toDefault(doLookup.mobileNo)).add("password", rh.toDefault(fromJson.password)).build();
+
+    public String doVerifyPassword(String key, String iv, ProfileSyncOBJ obj) throws SecException {
+        String tohash = obj.getCode()+obj.getCodeLink()+obj.getPassword()+obj.getChannel();
+        LOGGER.error(":#: CHECKING---@ doVerifyPassword: tohash "+tohash);
         return  new AESCrypter(key, iv).encrypt(tohash);
     }
     
-    public String doVerifyPassword(String key, String iv, ProfileSyncOBJ obj) throws SecException {
-        String tohash = obj.getCode()+obj.getCodeLink()+obj.getPassword();
-        LOGGER.error(":#: doVerifyPassword: tohash "+tohash);
+    public String doVerifyPassword(String key, String iv, String password, ProfileSync obj) throws SecException {
+        String tohash = obj.getCode()+obj.getCodeLink()+password+obj.getChannel();
+        LOGGER.error(":#: CHECKING--1- doVerifyPassword: tohash "+tohash);
         return  new AESCrypter(key, iv).encrypt(tohash);
     }
     
     public String doVerifyPIN(String key, String iv, ProfileSyncOBJ obj) throws SecException {
-        String tohash = obj.getCode()+obj.getPin();
+        String tohash = obj.getCode()+obj.getPin()+obj.getChannel();
+        return  new AESCrypter(key, iv).encrypt(tohash);
+    }
+    
+    public String doVerifyPIN(String key, String iv,String pin,  ProfileSync obj) throws SecException {
+        String tohash = obj.getCode()+pin+obj.getChannel();
         return  new AESCrypter(key, iv).encrypt(tohash);
     }
     
     public String doForcePIN(String key, String iv, ProfileSyncOBJ obj) throws SecException {
-        String tohash = obj.getCode()+obj.getVerifyPin();
+        String tohash = obj.getCode()+obj.getVerifyPin()+obj.getChannel();
+        LOGGER.error(":#: CHECKING-doForcePIN-3- doVerifyPassword: tohash "+tohash);
         return  new AESCrypter(key, iv).encrypt(tohash);
     }
     

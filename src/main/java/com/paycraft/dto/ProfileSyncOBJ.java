@@ -22,8 +22,12 @@ public class ProfileSyncOBJ {
     private String newPin;
     private String msisdn;
     private String userCode;
+    private String channel;
     private long pid;
     private String controlCode;
+    private String principal;
+    private String principalControlCode;
+    private String appId;
 
     public String getCode() {
         return code;
@@ -121,10 +125,41 @@ public class ProfileSyncOBJ {
         this.newPin = newPin;
     }
 
-    @Override
-    public String toString() {
-        return "ProfileSyncOBJ{" + "code=" + code + ", codeLink=" + codeLink + ", password=" + password + ", verifyPassword=" + verifyPassword + ", pin=" + pin + ", verifyPin=" + verifyPin + ", newPassword=" + newPassword + ", newPin=" + newPin + ", msisdn=" + msisdn + ", userCode=" + userCode + ", pid=" + pid + ", controlCode=" + controlCode + '}';
+    public String getPrincipalControlCode() {
+        return principalControlCode;
     }
 
-   
+    public void setPrincipalControlCode(String principalControlCode) {
+        this.principalControlCode = principalControlCode;
+    }
+
+    public String getPrincipal() {
+        return principal;
+    }
+
+    public void setPrincipal(String principal) {
+        this.principal = principal;
+    }
+
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    @Override
+    public String toString() {
+        return "ProfileSyncOBJ{" + "code=" + code + ", codeLink=" + codeLink + ", password=" + password + ", verifyPassword=" + verifyPassword + ", pin=" + pin + ", verifyPin=" + verifyPin + ", newPassword=" + newPassword + ", newPin=" + newPin + ", msisdn=" + msisdn + ", userCode=" + userCode + ", channel=" + channel + ", pid=" + pid + ", controlCode=" + controlCode + ", principal=" + principal + ", principalControlCode=" + principalControlCode + ", appId=" + appId + '}';
+    }
+
 }
